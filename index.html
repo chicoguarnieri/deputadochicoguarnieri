@@ -87,13 +87,21 @@
     <div id="upload-overlay"><div class="bg-white p-8 rounded-2xl text-center"><div class="w-12 h-12 border-4 border-br-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-slate-800 font-bold">Processando...</p></div></div>
     <input type="file" id="global-file-input" class="hidden" accept="image/*">
 
-    <div id="ai-modal" class="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div id="ai-modal" class="fixed inset-0 z-[140] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative text-slate-800">
             <button onclick="document.getElementById('ai-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-br-blue"></i> Redator IA</h2>
             <p class="mb-4 text-sm text-slate-500">Digite um resumo ou tópicos. A IA escreverá a matéria completa.</p>
             <textarea id="ai-prompt" class="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4" placeholder="Ex: O deputado visitou a escola X hoje e prometeu reforma na quadra..."></textarea>
             <button onclick="generateAI()" class="w-full py-3 bg-gradient-to-r from-br-blue to-purple-600 text-white font-bold rounded-xl shadow-lg hover:opacity-90">Gerar Matéria</button>
+        </div>
+    </div>
+
+    <!-- POPUP DE EDIÇÃO DE MATÉRIA -->
+    <div id="edit-modal-overlay" class="fixed inset-0 z-[130] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div id="edit-modal-container" class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto text-slate-800">
+            <button onclick="closeEditModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 text-2xl z-10"><i class="fa-solid fa-xmark"></i></button>
+            <!-- O formulário de edição será injetado aqui via JS -->
         </div>
     </div>
 
@@ -282,28 +290,33 @@
 
                 <div class="lg:col-span-3 ios-card p-8 rounded-3xl">
                     <div id="admin-news" class="admin-content">
-                        <div class="flex justify-between items-center mb-6 border-b pb-2">
-                            <h2 class="text-xl font-bold">Postar Notícia</h2>
-                            <div class="flex gap-2">
-                                <button onclick="openAIModal()" class="text-sm bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 py-1 rounded-lg hover:shadow-lg transition-all"><i class="fa-solid fa-wand-magic-sparkles"></i> Escrever com IA</button>
-                                <button onclick="resetNewsForm()" class="text-sm text-br-blue hover:underline">Limpar</button>
-                            </div>
-                        </div>
-                        <div class="space-y-6">
-                            <input type="hidden" id="news-id-edit">
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="design-control-group"><label class="design-label">Título</label><input type="text" id="news-title" class="design-input" placeholder="Manchete impactante"></div>
-                                <div class="design-control-group">
-                                    <label class="design-label">Capa</label>
-                                    <div class="flex gap-2 mb-2"><input type="text" id="news-image" class="design-input flex-grow" oninput="document.getElementById('news-img-preview').src = this.value || ''"><button onclick="triggerUpload('news-image', 'news-img-preview')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div>
-                                    <label class="design-label text-xs">Foco</label><select id="news-img-pos" class="design-input w-full" onchange="previewImgPos(this.value)"><option value="center">Centro</option><option value="top">Topo</option><option value="bottom">Baixo</option></select>
-                                    <img id="news-img-preview" class="h-32 w-full object-cover mt-2 rounded bg-slate-100">
+                        <!-- MÓDULO EMBUTIDO NO WRAPPER PARA PERMITIR POPUP DINÂMICO -->
+                        <div id="admin-news-original-container">
+                            <div id="admin-news-form-content">
+                                <div class="flex justify-between items-center mb-6 border-b pb-2">
+                                    <h2 id="form-title-text" class="text-xl font-bold">Postar Notícia</h2>
+                                    <div class="flex gap-2">
+                                        <button onclick="openAIModal()" class="text-sm bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 py-1 rounded-lg hover:shadow-lg transition-all"><i class="fa-solid fa-wand-magic-sparkles"></i> Escrever com IA</button>
+                                        <button onclick="resetNewsForm()" class="text-sm text-br-blue hover:underline">Limpar</button>
+                                    </div>
+                                </div>
+                                <div class="space-y-6">
+                                    <input type="hidden" id="news-id-edit">
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        <div class="design-control-group"><label class="design-label">Título</label><input type="text" id="news-title" class="design-input" placeholder="Manchete impactante"></div>
+                                        <div class="design-control-group">
+                                            <label class="design-label">Capa</label>
+                                            <div class="flex gap-2 mb-2"><input type="text" id="news-image" class="design-input flex-grow" oninput="document.getElementById('news-img-preview').src = this.value || ''"><button onclick="triggerUpload('news-image', 'news-img-preview')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div>
+                                            <label class="design-label text-xs">Foco</label><select id="news-img-pos" class="design-input w-full" onchange="previewImgPos(this.value)"><option value="center">Centro</option><option value="top">Topo</option><option value="bottom">Baixo</option></select>
+                                            <img id="news-img-preview" class="h-32 w-full object-cover mt-2 rounded bg-slate-100">
+                                        </div>
+                                    </div>
+                                    <div><label class="design-label mb-2">Corpo</label><div id="sections-container" class="space-y-4"></div><button onclick="addSection()" class="mt-2 text-br-blue font-bold hover:underline">+ Nova Seção</button></div>
+                                    <div class="design-control-group"><label class="design-label mb-3">Categorias</label><div class="grid grid-cols-2 md:grid-cols-3 gap-3"><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="geral"> Geral</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="assembleia"> Assembleia</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="fiscalizacao"> Fiscalização</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="ja-e-lei"> Já é Lei</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="opiniao"> Opinião</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="projetos"> Projetos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="indicacoes"> Indicações</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="requerimentos"> Requerimentos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="oficios"> Ofícios</label></div></div>
+                                    <div class="design-control-group"><label class="design-label">Autor</label><select id="news-journalist-select" class="design-input w-full"><option value="">Selecione...</option></select></div>
+                                    <button id="btn-publish" onclick="publishNews()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 text-lg"><i class="fa-solid fa-paper-plane"></i> Publicar</button>
                                 </div>
                             </div>
-                            <div><label class="design-label mb-2">Corpo</label><div id="sections-container" class="space-y-4"></div><button onclick="addSection()" class="mt-2 text-br-blue font-bold hover:underline">+ Nova Seção</button></div>
-                            <div class="design-control-group"><label class="design-label mb-3">Categorias</label><div class="grid grid-cols-2 md:grid-cols-3 gap-3"><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="geral"> Geral</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="assembleia"> Assembleia</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="fiscalizacao"> Fiscalização</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="ja-e-lei"> Já é Lei</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="opiniao"> Opinião</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="projetos"> Projetos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="indicacoes"> Indicações</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="requerimentos"> Requerimentos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="oficios"> Ofícios</label></div></div>
-                            <div class="design-control-group"><label class="design-label">Autor</label><select id="news-journalist-select" class="design-input w-full"><option value="">Selecione...</option></select></div>
-                            <button id="btn-publish" onclick="publishNews()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 text-lg"><i class="fa-solid fa-paper-plane"></i> Publicar</button>
                         </div>
                     </div>
 
@@ -362,21 +375,72 @@
              addSection(); generatePagesInputs();
         });
 
-        // --- IA INTELIGENTE ---
+        // --- IA INTELIGENTE (OPEN SOURCE / JORNALISTA) ---
         function openAIModal() { document.getElementById('ai-modal').classList.remove('hidden'); }
-        function generateAI() {
-            const prompt = document.getElementById('ai-prompt').value;
-            if(!prompt) { alert("Digite algo!"); return; }
-            const btn = event.currentTarget; btn.innerText = "Escrevendo...";
-            setTimeout(() => {
-                const title = "Nova ação: " + prompt.split('.')[0].substring(0, 50) + "...";
-                const body = `<div class="mb-6 prose prose-lg text-slate-700"><p><strong>Cuiabá, MT</strong> — ${prompt}</p><p>A iniciativa visa fortalecer as bases e garantir que as demandas da população sejam atendidas com agilidade.</p></div>`;
-                document.getElementById('news-title').value = title;
-                const editor = document.querySelector('.section-text-input');
-                if(editor) editor.innerHTML = body;
+        async function generateAI() {
+            const promptText = document.getElementById('ai-prompt').value;
+            if(!promptText) { alert("Digite algo!"); return; }
+            const btn = event.currentTarget; 
+            btn.innerText = "Redigindo matéria...";
+            btn.disabled = true;
+
+            try {
+                // Utilizando uma API pública focada em geração de texto (Pollinations) via GET para evitar bloqueios de CORS (Failed to fetch)
+                const systemMsg = "Você é um jornalista profissional, imparcial e especializado em política e assessoria pública. Escreva uma matéria jornalística completa (com introdução, desenvolvimento e conclusão) baseada no resumo do usuário. Formate a resposta estritamente em JSON válido: {\"title\": \"Título da matéria\", \"body\": \"<p>Texto em HTML</p>\"}. Não use quebras de linha literais no JSON.";
+                
+                const fullPrompt = systemMsg + "\n\nResumo da matéria:\n" + promptText;
+                const response = await fetch('https://text.pollinations.ai/' + encodeURIComponent(fullPrompt));
+
+                const result = await response.text();
+                
+                let data = {};
+                try {
+                    // Tenta extrair apenas o bloco JSON para ignorar marcações Markdown fora do lugar
+                    const match = result.match(/\{[\s\S]*\}/);
+                    if (!match) throw new Error("Sem JSON");
+                    data = JSON.parse(match[0]);
+                } catch(e) {
+                    // Fallback extremamente robusto: Se a IA gerar JSON quebrado (comum com quebras de linha em HTML)
+                    console.warn("Parse falhou, extraindo via Expressão Regular.");
+                    const titleMatch = result.match(/"(?:title|titulo)"\s*:\s*"([^"]+)"/i);
+                    const bodyMatch = result.match(/"(?:body|texto|conteudo)"\s*:\s*"([\s\S]+?)"\s*\}/i);
+                    
+                    data.title = titleMatch ? titleMatch[1] : "Matéria Gerada pela IA";
+                    if (bodyMatch) {
+                        data.body = bodyMatch[1];
+                    } else {
+                        // Limpa as tags de código sem quebrar o layout, evitando Syntax Error na regex de backtick
+                        let cleanText = result.replace(/\x60\x60\x60(json|html)?/gi, '').replace(/\{|\}|"(?:title|body)"\s*:/gi, '').trim();
+                        data.body = `<p>${cleanText}</p>`;
+                    }
+                }
+
+                const finalTitle = data.title || data.titulo || "Matéria Gerada pela IA";
+                let finalBody = data.body || data.texto || data.conteudo || data.text || result;
+                
+                // Limpeza de caracteres de escape que a IA costuma deixar
+                finalBody = finalBody.replace(/\\n/g, '<br>').replace(/\\"/g, '"');
+
+                document.getElementById('news-title').value = finalTitle;
+                const editor = document.querySelector('#sections-container .editor-area');
+                if(editor) {
+                    editor.innerHTML = finalBody;
+                } else {
+                    // Se não tiver seção, cria uma e insere
+                    addSection();
+                    document.querySelector('#sections-container .editor-area').innerHTML = finalBody;
+                }
+                
                 document.getElementById('ai-modal').classList.add('hidden');
-                btn.innerText = "Gerar Matéria"; document.getElementById('ai-prompt').value = ""; alert("Texto gerado!");
-            }, 1500);
+                document.getElementById('ai-prompt').value = ""; 
+                alert("Matéria gerada e formatada com sucesso!");
+            } catch (error) {
+                console.error("Erro na IA Open Source:", error);
+                alert("Ocorreu um erro ao conectar com a IA. Tente novamente em alguns instantes.");
+            } finally {
+                btn.innerText = "Gerar Matéria";
+                btn.disabled = false;
+            }
         }
 
         // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) ---
@@ -575,7 +639,7 @@
             return encodeURIComponent(`*${p.title}*\n\n${summary}\n\nLeia mais: ${getPostLink(p.id)}`); // <- LINK DIRETO
         }
 
-        // --- EDITAR POST (COMPLETO) ---
+        // --- SISTEMA DE POPUP (MODAL) PARA EDIÇÃO DE MATÉRIAS ---
         function editPost(id) {
             const p = siteData.posts.find(post => post.id === id);
             if(!p) return;
@@ -599,12 +663,28 @@
             
             document.getElementById('sections-container').innerHTML = '';
             addSection();
-            const editor = document.querySelector('#section-1 .editor-area');
-            editor.innerHTML = p.content;
+            // Correção para selecionar de forma confiável dentro do container de seções após recriá-lo
+            const editor = document.querySelector('#sections-container .editor-area');
+            if (editor) {
+                editor.innerHTML = p.content;
+            }
             
             document.getElementById('btn-publish').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
-            switchAdminTab('news');
-            window.scrollTo({top:0, behavior:'smooth'});
+            document.getElementById('form-title-text').innerText = 'Editar Notícia';
+            
+            // MOVER FORMULÁRIO PARA O POPUP MAGICO
+            const formContent = document.getElementById('admin-news-form-content');
+            document.getElementById('edit-modal-container').appendChild(formContent);
+            document.getElementById('edit-modal-overlay').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            // DEVOLVER FORMULÁRIO PARA A ABA ORIGINAL
+            const formContent = document.getElementById('admin-news-form-content');
+            document.getElementById('admin-news-original-container').appendChild(formContent);
+            document.getElementById('edit-modal-overlay').classList.add('hidden');
+            
+            resetNewsForm();
         }
 
         function deletePost(id) {
@@ -690,13 +770,69 @@
             
             renderAllPosts(); renderManageList();
             
-            const btn = event.currentTarget; btn.innerHTML = 'Salvando...';
+            const btn = document.getElementById('btn-publish');
+            btn.innerHTML = 'Salvando...';
             const fd = new URLSearchParams(); fd.append('posts', JSON.stringify(siteData.posts));
             fetch(GOOGLE_SCRIPT_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
-                if(d.status==='success') { alert('Publicado!'); navigateTo('home'); resetNewsForm(); } else alert('Erro');
-            }).finally(()=>{ btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar'; });
+                if(d.status==='success') { 
+                    alert('Salvo com sucesso!'); 
+                    if (!document.getElementById('edit-modal-overlay').classList.contains('hidden')) {
+                        closeEditModal();
+                    } else {
+                        navigateTo('home'); 
+                        resetNewsForm(); 
+                    }
+                } else alert('Erro');
+            }).finally(()=>{ 
+                if(document.getElementById('news-id-edit').value === '') {
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar'; 
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações'; 
+                }
+            });
         }
-        function resetNewsForm() { document.getElementById('news-id-edit').value = ''; document.getElementById('news-title').value = ''; document.getElementById('news-image').value = ''; document.getElementById('sections-container').innerHTML = ''; addSection(); document.getElementById('btn-publish').innerHTML='<i class="fa-solid fa-paper-plane"></i> Publicar'; }
+        
+        function resetNewsForm() { 
+            document.getElementById('news-id-edit').value = ''; 
+            document.getElementById('news-title').value = ''; 
+            document.getElementById('news-image').value = ''; 
+            document.getElementById('news-img-preview').src = '';
+            document.getElementById('sections-container').innerHTML = ''; 
+            addSection(); 
+            document.getElementById('btn-publish').innerHTML='<i class="fa-solid fa-paper-plane"></i> Publicar'; 
+            const titleText = document.getElementById('form-title-text');
+            if(titleText) titleText.innerText = 'Postar Notícia';
+        }
+
+        async function loadFromSheet() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            try {
+                const r = await fetch(GOOGLE_SCRIPT_URL); 
+                const d = await r.json();
+                if(d.config) { 
+                    Object.keys(d.config).forEach(k => applyConfig(k, d.config[k])); 
+                    if(d.config['site_journalists']) { 
+                        siteData.journalists = d.config['site_journalists']; 
+                        renderJournalistsList(); 
+                        populateJournalistSelect(); 
+                    } 
+                }
+                if(d.posts) { 
+                    siteData.posts = d.posts; 
+                    renderAllPosts(); 
+                    renderManageList(); 
+                }
+                populateAdminInputs();
+                
+                // ABRIR MATÉRIA ESPECÍFICA CASO O LINK CONTENHA "?post="
+                const params = new URLSearchParams(window.location.search);
+                const postId = params.get('post');
+                if (postId) {
+                    setTimeout(() => openPost(postId), 100);
+                }
+                
+            } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
+        }
 
         function renderAllPosts() { renderPostsContainer('feed-home', siteData.posts.slice(0,3)); ['assembleia','projetos','indicacoes','requerimentos','oficios','fiscalizacao','ja-e-lei','opiniao','geral'].forEach(c => renderPostsContainer(`content-${c}`, siteData.posts.filter(p=>p.categories.includes(c)))); }
         function renderPostsContainer(id, posts) {
@@ -734,24 +870,6 @@
             navigateTo('single-post');
         }
 
-        async function loadFromSheet() {
-            document.getElementById('loading-overlay').style.display = 'flex';
-            try {
-                const r = await fetch(GOOGLE_SCRIPT_URL); const d = await r.json();
-                if(d.config) { Object.keys(d.config).forEach(k => applyConfig(k, d.config[k])); if(d.config['site_journalists']) { siteData.journalists = d.config['site_journalists']; renderJournalistsList(); populateJournalistSelect(); } }
-                if(d.posts) { siteData.posts = d.posts; renderAllPosts(); renderManageList(); }
-                populateAdminInputs();
-                
-                // ABRIR MATÉRIA ESPECÍFICA CASO O LINK CONTENHA "?post="
-                const params = new URLSearchParams(window.location.search);
-                const postId = params.get('post');
-                if (postId) {
-                    setTimeout(() => openPost(postId), 100);
-                }
-                
-            } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
-        }
-        
         // MODIFICAÇÃO INVISÍVEL NO JS PARA MANTER A DUPLICAÇÃO DO LETREIRO ATUALIZADA
         function updatePreview(id, v) { 
             document.getElementById(id).innerText = v; 
