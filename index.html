@@ -16,7 +16,7 @@
                     colors: {
                         br: {
                             blue: '#002776',
-                            yellow: '#FFDF00', // Amarelo original restaurado
+                            yellow: '#FFDF00',
                             green: '#009C3B',
                             white: '#FFFFFF',
                             light: '#F5F5F7',
@@ -29,14 +29,13 @@
     </script>
 
     <style>
-        /* ESTILO VISUAL RESTAURADO */
         body {
             background-color: #002776;
             background-image: 
                 radial-gradient(at 10% 10%, rgba(0, 156, 59, 0.3) 0px, transparent 50%),
                 radial-gradient(at 90% 90%, rgba(255, 223, 0, 0.2) 0px, transparent 50%);
             background-attachment: fixed;
-            color: white; /* Texto padrão branco na home */
+            color: white; 
         }
 
         .ios-card {
@@ -44,7 +43,7 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
-            color: #1e293b; /* Texto escuro dentro dos cards */
+            color: #1e293b; 
         }
 
         .ios-nav {
@@ -54,15 +53,12 @@
             box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4);
         }
 
-        /* ADMIN */
         #page-admin h1, #page-admin h2, #page-admin h3, #page-admin label { color: #1e293b !important; }
         #page-admin h1.text-white { color: #ffffff !important; }
         #page-admin input, #page-admin textarea, #page-admin select { color: #0f172a !important; background-color: #f8fafc; border: 1px solid #cbd5e1; }
         .design-control-group { background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; }
         .admin-tab-active { background-color: #002776 !important; color: white !important; }
-        .editable-highlight { border: 2px dashed #FFDF00; position: relative; }
 
-        /* EDITOR */
         .section-block { background: white; border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 15px; position: relative; }
         .remove-section-btn { position: absolute; top: 10px; right: 10px; color: #ef4444; cursor: pointer; }
         .editor-area { min-height: 150px; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; overflow-y: auto; background: #f8fafc; color: #0f172a; }
@@ -70,11 +66,9 @@
         .rich-toolbar button { padding: 5px 10px; margin-right: 2px; border-radius: 4px; background: #e2e8f0; font-weight: bold; font-size: 14px; }
         .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* LOADING */
         #loading-overlay { position: fixed; inset: 0; background: #002776; z-index: 100; display: flex; align-items: center; justify-content: center; }
         #upload-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 110; display: none; align-items: center; justify-content: center; }
 
-        /* MENU & MARQUEE */
         .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.2s; }
         .group:hover > .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
         .sub-dropdown-menu { opacity: 0; visibility: hidden; transform: translateX(10px); transition: all 0.2s; }
@@ -100,10 +94,11 @@
         </div>
     </div>
 
-    <header class="fixed top-0 left-0 right-0 z-50 p-4 transition-all duration-300" id="navbar">
-        <div class="max-w-7xl mx-auto ios-nav rounded-3xl px-6 py-4 flex justify-between items-center">
+    <!-- NAVBAR RESPONSIVA AJUSTADA -->
+    <header class="fixed top-0 left-0 right-0 z-50 p-2 md:p-4 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto ios-nav rounded-[2rem] md:rounded-3xl px-4 py-3 md:px-6 md:py-4 flex justify-between items-center">
             <a href="javascript:void(0)" onclick="navigateTo('home')" class="flex items-center gap-3 group">
-                <img id="img-logo-main" src="https://chicoguarnieri.com.br/wp-content/uploads/2025/01/logo-chico-png-1536x864.png" class="h-14 w-auto object-contain group-hover:scale-105 transition-transform">
+                <img id="img-logo-main" src="https://chicoguarnieri.com.br/wp-content/uploads/2025/01/logo-chico-png-1536x864.png" class="h-10 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform">
             </a>
             <nav class="hidden lg:flex items-center gap-2">
                 <a id="btn-nav-home" href="javascript:void(0)" onclick="navigateTo('home')" class="px-5 py-2.5 rounded-full text-sm font-medium text-white hover:bg-white/20 transition-all">Início</a>
@@ -133,12 +128,12 @@
                     <span id="txt-btn-contact">Fale Conosco</span> <i class="fa-solid fa-paper-plane text-xs"></i>
                 </a>
             </nav>
-            <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white"><i class="fa-solid fa-bars"></i></button>
+            <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white"><i class="fa-solid fa-bars"></i></button>
         </div>
     </header>
 
-    <div id="mobile-menu" class="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl transform translate-x-full transition-transform duration-300 lg:hidden flex flex-col pt-32 px-6 overflow-y-auto text-slate-800">
-        <button onclick="toggleMobileMenu()" class="absolute top-8 right-8 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    <div id="mobile-menu" class="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl transform translate-x-full transition-transform duration-300 lg:hidden flex flex-col pt-24 px-6 overflow-y-auto text-slate-800">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
         <nav class="flex flex-col gap-4 text-lg font-medium">
             <button onclick="navigateTo('home')" class="text-left p-4 rounded-2xl bg-slate-50 w-full">Início</button>
             <div class="p-4 rounded-2xl bg-slate-50">
@@ -154,7 +149,8 @@
         </nav>
     </div>
 
-    <main id="main-content" class="flex-grow pt-32 pb-0 px-0">
+    <!-- Ajuste pt-[100px] para a navbar não encavalar -->
+    <main id="main-content" class="flex-grow pt-[100px] md:pt-[130px] pb-0 px-0">
         
         <div id="page-home" class="page-section">
             <div class="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center mb-10 min-h-[600px]">
@@ -237,7 +233,8 @@
         </div>
 
         <div id="page-single-post" class="page-section hidden-page bg-white min-h-screen text-slate-800">
-            <div class="max-w-4xl mx-auto pt-10 px-4 pb-20">
+            <!-- padding top ajustado internamente também para evitar cortes -->
+            <div class="max-w-4xl mx-auto pt-6 px-4 pb-20">
                 <button onclick="window.history.back()" class="text-slate-500 hover:text-br-blue mb-6 flex items-center gap-2 font-bold"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
                 <div id="single-post-content"></div>
             </div>
@@ -361,6 +358,88 @@
             }, 1500);
         }
 
+        // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) ---
+        async function createShareableCanvasBlob(p) {
+            return new Promise((resolve, reject) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080;
+                canvas.height = 1080;
+                const ctx = canvas.getContext('2d');
+
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    // 1. Fundo Base Azul
+                    ctx.fillStyle = '#002776';
+                    ctx.fillRect(0, 0, 1080, 1080);
+
+                    // 2. Desenha a imagem (cobre do topo para baixo)
+                    const scale = Math.max(1080 / img.width, 1080 / img.height);
+                    const w = img.width * scale;
+                    const h = img.height * scale;
+                    ctx.drawImage(img, (1080 - w) / 2, 0, w, h);
+
+                    // 3. Degradê Escuro (Fade) por cima da imagem
+                    const grd = ctx.createLinearGradient(0, 300, 0, 1080);
+                    grd.addColorStop(0, 'rgba(0, 39, 118, 0)');
+                    grd.addColorStop(0.5, 'rgba(0, 39, 118, 0.9)');
+                    grd.addColorStop(1, '#002776');
+                    ctx.fillStyle = grd;
+                    ctx.fillRect(0, 0, 1080, 1080);
+
+                    // 4. Cabeçalho Personalizado
+                    ctx.fillStyle = '#FFDF00';
+                    ctx.font = 'bold 32px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('DEPUTADO ESTADUAL CHICO GUARNIERI', 540, 70);
+
+                    // 5. Escreve Título com Quebra de Linha Automática
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 65px Inter, sans-serif';
+                    const words = p.title.split(' ');
+                    let line = '';
+                    let y = 600; 
+                    const lineHeight = 75;
+                    for(let n = 0; n < words.length; n++) {
+                        const testLine = line + words[n] + ' ';
+                        if (ctx.measureText(testLine).width > 960 && n > 0) {
+                            ctx.fillText(line.trim(), 540, y);
+                            line = words[n] + ' ';
+                            y += lineHeight;
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    ctx.fillText(line.trim(), 540, y);
+
+                    // 6. Resumo Curto
+                    const tempDiv = document.createElement('div'); 
+                    tempDiv.innerHTML = p.content;
+                    let summary = tempDiv.textContent.substring(0, 100).trim() + '...';
+                    ctx.fillStyle = '#E2E8F0';
+                    ctx.font = '35px Inter, sans-serif';
+                    ctx.fillText(summary, 540, y + 90);
+
+                    // 7. Rodapé "Call to Action"
+                    ctx.fillStyle = '#009C3B';
+                    ctx.fillRect(0, 1000, 1080, 80);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 30px Inter, sans-serif';
+                    ctx.fillText('LEIA A MATÉRIA COMPLETA NO SITE', 540, 1050);
+
+                    // Exporta como Imagem JPG
+                    try {
+                        canvas.toBlob((blob) => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('Canvas converteu falhou'));
+                        }, 'image/jpeg', 0.95);
+                    } catch (err) { reject(err); }
+                };
+                img.onerror = () => reject(new Error('Imagem original bloqueou a leitura de Pixel (CORS)'));
+                img.src = p.image;
+            });
+        }
+
         // --- COMPARTILHAMENTO ---
         async function shareNative(id) {
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
@@ -370,30 +449,39 @@
             const shareText = `*${p.title}*\n\n${summary}\n\nLeia mais acessando: ${link}`;
             const shareData = { title: p.title, text: shareText };
 
+            const btn = document.getElementById(`btn-share-native-${id}`);
+            if(btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Efeito de Carregando
+
             if(navigator.share) {
                 try {
-                    // Busca a imagem com tratamento de CORS para garantir o envio no Face/Insta
-                    const response = await fetch(p.image, { mode: 'cors', credentials: 'omit' });
-                    if (!response.ok) throw new Error('Falha no CORS ou rede');
-                    const blob = await response.blob();
-                    const file = new File([blob], 'materia.jpg', { type: blob.type });
+                    // Tenta criar nossa imagem bonitona gerada com título
+                    const blob = await createShareableCanvasBlob(p);
+                    const file = new File([blob], 'materia_chico_guarnieri.jpg', { type: 'image/jpeg' });
                     
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         shareData.files = [file];
                     }
                     await navigator.share(shareData);
                 } catch (e) {
-                    console.warn("Aviso: Imagem bloqueada por CORS. Compartilhando apenas texto.", e);
-                    // Fallback de segurança se houver bloqueio de imagem
+                    console.warn("Aviso: Gerador de foto bloqueado por CORS. Compartilhando imagem crua ou só texto.", e);
+                    // Falhou em criar a imagem rica? Envia a imagem original limpa.
                     try { 
-                        await navigator.share({ title: p.title, text: shareText, url: link }); 
+                        const response = await fetch(p.image, { mode: 'cors', credentials: 'omit' });
+                        if(response.ok) {
+                            const blob = await response.blob();
+                            const file = new File([blob], 'materia.jpg', { type: blob.type });
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) shareData.files = [file];
+                        }
+                        await navigator.share(shareData); 
                     } catch(err) { 
-                        console.log("Compartilhamento cancelado", err); 
+                        // Falhou de vez? Envia só texto e o link do site.
+                        try { await navigator.share({ title: p.title, text: shareText, url: link }); } catch(errX) {}
                     }
                 }
             } else {
-                alert("Seu navegador não suporta a função de compartilhamento nativa. Tente o botão do WhatsApp.");
+                alert("Seu navegador não suporta a função de compartilhamento nativa. Tente os outros botões.");
             }
+            if(btn) btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>'; // Restaura botão
         }
 
         function getShareText(id) {
@@ -406,36 +494,25 @@
         function shareWhatsApp(id) { window.open(`https://api.whatsapp.com/send?text=${getShareText(id)}`, '_blank'); }
         
         function shareFacebook(id) { 
-            // O Facebook bloqueia texto automático na versão Web. Usar a API nativa no celular resolve isso.
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
-                shareNative(id); 
+                shareNative(id); // No celular, força a geração de imagem customizada!
             } else {
                 window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank'); 
             }
         }
         
         function shareInstagram(id) {
-            // Instagram depende 100% do app nativo. 
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
-                shareNative(id); 
+                shareNative(id); // O Instagram no celular sempre vai pegar a imagem bonita criada no Canvas!
             } else {
-                // No PC, copiamos o texto para o usuário não perder a legenda.
                 const p = siteData.posts.find(x => x.id === id);
                 if(p) {
                     const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
-                    const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
-                    const text = `*${p.title}*\n\n${summary}\n\nLeia mais: ${window.location.href}`;
-                    
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        alert('Texto copiado para a área de transferência!\n\nNo computador, salve a imagem da matéria e cole este texto no seu Instagram.');
-                    } catch (err) {
-                        alert('No computador, salve a imagem de capa e copie o link para postar no seu Instagram!');
-                    }
+                    const text = `*${p.title}*\n\n${tempDiv.textContent.substring(0, 150).trim() + '...'}\n\nLeia mais: ${window.location.href}`;
+                    const textArea = document.createElement("textarea"); textArea.value = text;
+                    document.body.appendChild(textArea); textArea.select();
+                    try { document.execCommand('copy'); alert('Texto copiado!\n\nNo computador, salve a imagem da matéria e cole o texto copiado no seu Instagram.'); } 
+                    catch (err) { alert('No computador, copie o texto manualmente para postar no Instagram.'); }
                     document.body.removeChild(textArea);
                 }
             }
@@ -580,13 +657,24 @@
             const shareHTML = `
             <div class="flex items-center gap-3">
                 <span class="font-bold text-slate-400 text-sm hidden md:inline">Compartilhar:</span>
-                <button onclick="shareWhatsApp('${p.id}')" class="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white hover:bg-green-600 transition shadow-md" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
-                <button onclick="shareFacebook('${p.id}')" class="w-9 h-9 rounded-full bg-[#1877F2] flex items-center justify-center text-white hover:bg-blue-700 transition shadow-md" title="Facebook"><i class="fa-brands fa-facebook-f"></i></button>
-                <button onclick="shareInstagram('${p.id}')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white hover:opacity-90 transition shadow-md" title="Instagram"><i class="fa-brands fa-instagram"></i></button>
-                <button onclick="shareNative('${p.id}')" class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition shadow-md" title="Compartilhar como Imagem"><i class="fa-solid fa-share-nodes"></i></button>
+                <button id="btn-share-wpp-${p.id}" onclick="shareWhatsApp('${p.id}')" class="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white hover:bg-green-600 transition shadow-md" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+                <button id="btn-share-fb-${p.id}" onclick="shareFacebook('${p.id}')" class="w-9 h-9 rounded-full bg-[#1877F2] flex items-center justify-center text-white hover:bg-blue-700 transition shadow-md" title="Facebook"><i class="fa-brands fa-facebook-f"></i></button>
+                <button id="btn-share-ig-${p.id}" onclick="shareInstagram('${p.id}')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white hover:opacity-90 transition shadow-md" title="Instagram"><i class="fa-brands fa-instagram"></i></button>
+                <button id="btn-share-native-${p.id}" onclick="shareNative('${p.id}')" class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition shadow-md" title="Compartilhar como Imagem"><i class="fa-solid fa-share-nodes"></i></button>
             </div>`;
 
-            document.getElementById('single-post-content').innerHTML = `<h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4">${p.title}</h1><div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-8"><div class="flex items-center gap-2 text-sm text-slate-500"><span class="font-bold text-br-blue">${p.author.name}</span> • <span>${p.date}</span></div>${shareHTML}</div><div class="w-full h-[400px] rounded-2xl overflow-hidden mb-10 shadow-xl"><img src="${p.image}" class="w-full h-full object-cover object-${p.imgPos||'center'}"></div><div class="prose prose-lg max-w-none text-slate-700 leading-relaxed mb-16">${p.content}</div>${auth}`;
+            // AQUI RESOLVEMOS A IMAGEM CORTADA (object-contain, max-h-[60vh] e bg-slate-100)
+            document.getElementById('single-post-content').innerHTML = `
+                <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">${p.title}</h1>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-8">
+                    <div class="flex items-center gap-2 text-sm text-slate-500"><span class="font-bold text-br-blue">${p.author.name}</span> • <span>${p.date}</span></div>
+                    ${shareHTML}
+                </div>
+                <div class="w-full max-h-[60vh] bg-slate-100 rounded-2xl overflow-hidden mb-10 shadow-md flex items-center justify-center">
+                    <img src="${p.image}" class="w-full h-full max-h-[60vh] object-contain">
+                </div>
+                <div class="prose prose-lg max-w-none text-slate-700 leading-relaxed mb-16">${p.content}</div>
+                ${auth}`;
             navigateTo('single-post');
         }
 
