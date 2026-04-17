@@ -74,8 +74,11 @@
         .sub-dropdown-menu { opacity: 0; visibility: hidden; transform: translateX(10px); transition: all 0.2s; }
         .group\/sub:hover > .sub-dropdown-menu { opacity: 1; visibility: visible; transform: translateX(0); }
         .hidden-page { display: none; } .hidden-tab { display: none !important; }
-        .marquee-container { overflow: hidden; white-space: nowrap; } .marquee-content { display: inline-block; animation: marquee 20s linear infinite; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        /* CORREÇÃO DO MARQUEE (LETREIRO COM LOOP INFINITO SEM BURACO) */
+        .marquee-container { display: flex; overflow: hidden; width: 100%; white-space: nowrap; } 
+        .marquee-content { flex-shrink: 0; animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -179,8 +182,18 @@
 
             <div class="bg-br-yellow w-full py-3 overflow-hidden border-y-4 border-yellow-500/20">
                 <div class="marquee-container">
-                    <div id="txt-ticker" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm flex gap-8">
-                        <span>• Chico Guarnieri</span><span>• Deputado Chico Guarnieri</span><span>• Chico Guarnieri</span><span>• Deputado Chico Guarnieri</span>
+                    <div id="txt-ticker" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm pr-12">
+                        • Chico Guarnieri • Deputado Chico Guarnieri • Chico Guarnieri • Deputado Chico Guarnieri
+                    </div>
+                    <!-- CLONES PARA EFEITO DE LOOP INFINITO CONTÍNUO SEM BURACOS -->
+                    <div id="txt-ticker-dup" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm pr-12" aria-hidden="true">
+                        • Chico Guarnieri • Deputado Chico Guarnieri • Chico Guarnieri • Deputado Chico Guarnieri
+                    </div>
+                    <div id="txt-ticker-dup2" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm pr-12" aria-hidden="true">
+                        • Chico Guarnieri • Deputado Chico Guarnieri • Chico Guarnieri • Deputado Chico Guarnieri
+                    </div>
+                    <div id="txt-ticker-dup3" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm pr-12" aria-hidden="true">
+                        • Chico Guarnieri • Deputado Chico Guarnieri • Chico Guarnieri • Deputado Chico Guarnieri
                     </div>
                 </div>
             </div>
@@ -703,7 +716,6 @@
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
             const auth = `<div class="mt-12 border-t pt-8"><h3 class="text-2xl font-bold text-slate-800 mb-6">Autor</h3><div class="border border-slate-200 p-6 rounded-2xl flex items-center gap-6 bg-slate-50"><div class="w-20 h-20 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden"><img src="${p.author.photo||''}" class="w-full h-full object-cover object-${p.author.imgPos||'center'}"></div><div><div class="text-xl font-bold text-br-blue mb-2">${p.author.name}</div><div class="flex gap-3"><button class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-bold">Ver posts</button><a href="mailto:${p.author.email}" class="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white"><i class="fa-solid fa-envelope"></i></a></div></div></div></div>`;
             
-            // WHATSAPP AGORA GERA E ANEXA IMAGEM E LINK ESPECÍFICO TAMBÉM
             const shareHTML = `
             <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
                 <span class="font-bold text-slate-400 text-sm mr-2 w-full lg:w-auto mb-2 lg:mb-0">Compartilhar:</span>
@@ -744,6 +756,33 @@
                 
             } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
         }
+        
+        // MODIFICAÇÃO INVISÍVEL NO JS PARA MANTER A DUPLICAÇÃO DO LETREIRO ATUALIZADA
+        function updatePreview(id, v) { 
+            document.getElementById(id).innerText = v; 
+            if(id === 'txt-ticker') { 
+                let d = document.getElementById('txt-ticker-dup'); if(d) d.innerText = v; 
+                let d2 = document.getElementById('txt-ticker-dup2'); if(d2) d2.innerText = v; 
+                let d3 = document.getElementById('txt-ticker-dup3'); if(d3) d3.innerText = v; 
+            }
+        }
+        function applyConfig(id, v) { 
+            const el = document.getElementById(id); 
+            if(!el) return; 
+            if(v.src) el.src=v.src; 
+            else if(v.image) el.style.backgroundImage=`url('${v.image}')`; 
+            else if(v.href) el.setAttribute('href',v.href); 
+            else if(v.html) el.innerHTML=v.html; 
+            else if(v.text) { 
+                el.innerText=v.text; 
+                if(id === 'txt-ticker') { 
+                    let d = document.getElementById('txt-ticker-dup'); if(d) d.innerText=v.text; 
+                    let d2 = document.getElementById('txt-ticker-dup2'); if(d2) d2.innerText=v.text; 
+                    let d3 = document.getElementById('txt-ticker-dup3'); if(d3) d3.innerText=v.text; 
+                } 
+            } 
+        }
+
         function saveToSheet() {
             const config = {}; trackedElements.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {text:el.innerText}; });
             trackedRichElements.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {html:el.innerHTML}; });
@@ -755,9 +794,7 @@
             const btn = event.currentTarget; btn.innerHTML = 'Salvando...';
             fetch(GOOGLE_SCRIPT_URL, {method:'POST', body:fd}).then(()=>alert('Salvo!')).finally(()=>btn.innerHTML='Salvar Configurações');
         }
-        function applyConfig(id, v) { const el = document.getElementById(id); if(!el) return; if(v.src) el.src=v.src; else if(v.image) el.style.backgroundImage=`url('${v.image}')`; else if(v.href) el.setAttribute('href',v.href); else if(v.html) el.innerHTML=v.html; else if(v.text) el.innerText=v.text; }
         function populateAdminInputs() { trackedElements.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.value=el.innerText; }); trackedRichElements.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.innerHTML=el.innerHTML; }); trackedImages.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) { const m=el.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/); if(m) i.value=m[1]; } }); trackedSrcImages.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.value=el.src; }); trackedLinks.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id+'-link'); if(el&&i) i.value=el.getAttribute('href'); }); }
-        function updatePreview(id, v) { document.getElementById(id).innerText = v; }
         function updatePreviewHTML(id, v) { document.getElementById(id).innerHTML = v; }
         function updateLink(id, v) { document.getElementById(id).setAttribute('href', v); }
         function updateImage(id, v) { document.getElementById(id).style.backgroundImage = `url('${v}')`; }
