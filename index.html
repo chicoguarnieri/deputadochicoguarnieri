@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deputado Estadual - Futuro e Transparência</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        br: {
+                            blue: '#002776',
+                            yellow: '#FFDF00', // Amarelo original restaurado
+                            green: '#009C3B',
+                            white: '#FFFFFF',
+                            light: '#F5F5F7',
+                        }
+                    },
+                    backdropBlur: { xs: '2px' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* ESTILO VISUAL RESTAURADO */
+        body {
+            background-color: #002776;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(0, 156, 59, 0.3) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(255, 223, 0, 0.2) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: white; /* Texto padrão branco na home */
+        }
+
+        .ios-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
+            color: #1e293b; /* Texto escuro dentro dos cards */
+        }
+
+        .ios-nav {
+            background: rgba(0, 39, 118, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4);
+        }
+
+        /* ADMIN */
+        #page-admin h1, #page-admin h2, #page-admin h3, #page-admin label { color: #1e293b !important; }
+        #page-admin h1.text-white { color: #ffffff !important; }
+        #page-admin input, #page-admin textarea, #page-admin select { color: #0f172a !important; background-color: #f8fafc; border: 1px solid #cbd5e1; }
+        .design-control-group { background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; }
+        .admin-tab-active { background-color: #002776 !important; color: white !important; }
+        .editable-highlight { border: 2px dashed #FFDF00; position: relative; }
+
+        /* EDITOR */
+        .section-block { background: white; border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 15px; position: relative; }
+        .remove-section-btn { position: absolute; top: 10px; right: 10px; color: #ef4444; cursor: pointer; }
+        .editor-area { min-height: 150px; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; overflow-y: auto; background: #f8fafc; color: #0f172a; }
+        .editor-area b { font-weight: 800; } .editor-area i { font-style: italic; } .editor-area img { max-width: 100%; border-radius: 0.5rem; margin: 10px 0; }
+        .rich-toolbar button { padding: 5px 10px; margin-right: 2px; border-radius: 4px; background: #e2e8f0; font-weight: bold; font-size: 14px; }
+        .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* LOADING */
+        #loading-overlay { position: fixed; inset: 0; background: #002776; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #upload-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 110; display: none; align-items: center; justify-content: center; }
+
+        /* MENU & MARQUEE */
+        .dropdown-menu { opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.2s; }
+        .group:hover > .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .sub-dropdown-menu { opacity: 0; visibility: hidden; transform: translateX(10px); transition: all 0.2s; }
+        .group\/sub:hover > .sub-dropdown-menu { opacity: 1; visibility: visible; transform: translateX(0); }
+        .hidden-page { display: none; } .hidden-tab { display: none !important; }
+        .marquee-container { overflow: hidden; white-space: nowrap; } .marquee-content { display: inline-block; animation: marquee 20s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <div id="loading-overlay"><div class="text-center"><div class="w-16 h-16 border-4 border-br-yellow border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-white font-bold animate-pulse">Sincronizando...</p></div></div>
+    <div id="upload-overlay"><div class="bg-white p-8 rounded-2xl text-center"><div class="w-12 h-12 border-4 border-br-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p class="text-slate-800 font-bold">Processando...</p></div></div>
+    <input type="file" id="global-file-input" class="hidden" accept="image/*">
+
+    <div id="ai-modal" class="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative text-slate-800">
+            <button onclick="document.getElementById('ai-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-br-blue"></i> Redator IA</h2>
+            <p class="mb-4 text-sm text-slate-500">Digite um resumo ou tópicos. A IA escreverá a matéria completa.</p>
+            <textarea id="ai-prompt" class="w-full h-32 p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4" placeholder="Ex: O deputado visitou a escola X hoje e prometeu reforma na quadra..."></textarea>
+            <button onclick="generateAI()" class="w-full py-3 bg-gradient-to-r from-br-blue to-purple-600 text-white font-bold rounded-xl shadow-lg hover:opacity-90">Gerar Matéria</button>
+        </div>
+    </div>
+
+    <header class="fixed top-0 left-0 right-0 z-50 p-4 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto ios-nav rounded-3xl px-6 py-4 flex justify-between items-center">
+            <a href="javascript:void(0)" onclick="navigateTo('home')" class="flex items-center gap-3 group">
+                <img id="img-logo-main" src="https://chicoguarnieri.com.br/wp-content/uploads/2025/01/logo-chico-png-1536x864.png" class="h-14 w-auto object-contain group-hover:scale-105 transition-transform">
+            </a>
+            <nav class="hidden lg:flex items-center gap-2">
+                <a id="btn-nav-home" href="javascript:void(0)" onclick="navigateTo('home')" class="px-5 py-2.5 rounded-full text-sm font-medium text-white hover:bg-white/20 transition-all">Início</a>
+                <div class="relative group">
+                    <button class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white group-hover:bg-white/20">
+                        <span id="txt-nav-work">Nosso Trabalho</span> <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div class="dropdown-menu absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl p-2 z-50">
+                        <div class="relative group/sub">
+                            <button onclick="navigateTo('assembleia')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-br-blue/5 text-sm font-medium text-slate-700 flex justify-between items-center">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-building-columns text-br-blue w-4"></i> Assembleia Leg.</span><i class="fa-solid fa-chevron-right text-xs opacity-40"></i>
+                            </button>
+                            <div class="sub-dropdown-menu absolute top-0 left-full ml-2 w-56 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-xl p-2">
+                                <button onclick="navigateTo('projetos')" class="w-full text-left block px-4 py-2 rounded-xl hover:bg-br-blue/5 text-sm text-slate-600">Projeto de Lei</button>
+                                <button onclick="navigateTo('indicacoes')" class="w-full text-left block px-4 py-2 rounded-xl hover:bg-br-blue/5 text-sm text-slate-600">Indicações</button>
+                                <button onclick="navigateTo('requerimentos')" class="w-full text-left block px-4 py-2 rounded-xl hover:bg-br-blue/5 text-sm text-slate-600">Requerimentos</button>
+                                <button onclick="navigateTo('oficios')" class="w-full text-left block px-4 py-2 rounded-xl hover:bg-br-blue/5 text-sm text-slate-600">Ofícios</button>
+                            </div>
+                        </div>
+                        <button onclick="navigateTo('fiscalizacao')" class="w-full text-left block px-4 py-3 rounded-xl hover:bg-br-blue/5 text-sm font-medium text-slate-700 flex items-center gap-2"><i class="fa-solid fa-magnifying-glass text-br-green w-4"></i> Fiscalização</button>
+                        <button onclick="navigateTo('ja-e-lei')" class="w-full text-left block px-4 py-3 rounded-xl hover:bg-br-blue/5 text-sm font-medium text-slate-700 flex items-center gap-2"><i class="fa-solid fa-gavel text-br-yellow w-4"></i> Já é Lei</button>
+                        <button onclick="navigateTo('opiniao')" class="w-full text-left block px-4 py-3 rounded-xl hover:bg-br-blue/5 text-sm font-medium text-slate-700 flex items-center gap-2"><i class="fa-solid fa-comment-dots text-purple-500 w-4"></i> Opinião</button>
+                        <button onclick="navigateTo('geral')" class="w-full text-left block px-4 py-3 rounded-xl hover:bg-br-blue/5 text-sm font-medium text-slate-700 flex items-center gap-2"><i class="fa-solid fa-newspaper text-slate-500 w-4"></i> Geral</button>
+                    </div>
+                </div>
+                <a id="btn-nav-contact" href="javascript:void(0)" onclick="navigateTo('contato')" class="ml-2 px-6 py-2.5 rounded-full bg-br-green text-white text-sm font-bold shadow-lg hover:shadow-br-green/50 hover:bg-green-700 transition-all ios-btn flex items-center gap-2">
+                    <span id="txt-btn-contact">Fale Conosco</span> <i class="fa-solid fa-paper-plane text-xs"></i>
+                </a>
+            </nav>
+            <button onclick="toggleMobileMenu()" class="lg:hidden w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white"><i class="fa-solid fa-bars"></i></button>
+        </div>
+    </header>
+
+    <div id="mobile-menu" class="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl transform translate-x-full transition-transform duration-300 lg:hidden flex flex-col pt-32 px-6 overflow-y-auto text-slate-800">
+        <button onclick="toggleMobileMenu()" class="absolute top-8 right-8 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+        <nav class="flex flex-col gap-4 text-lg font-medium">
+            <button onclick="navigateTo('home')" class="text-left p-4 rounded-2xl bg-slate-50 w-full">Início</button>
+            <div class="p-4 rounded-2xl bg-slate-50">
+                <div class="text-slate-400 text-xs uppercase font-bold mb-2">Nosso Trabalho</div>
+                <div class="pl-2 flex flex-col gap-3">
+                    <button onclick="navigateTo('assembleia')" class="font-semibold text-br-blue text-left w-full">Assembleia Legislativa</button>
+                    <button onclick="navigateTo('fiscalizacao')">Fiscalização</button>
+                    <button onclick="navigateTo('ja-e-lei')">Já é Lei</button>
+                    <button onclick="navigateTo('geral')">Geral</button>
+                </div>
+            </div>
+            <button onclick="navigateTo('contato')" class="p-4 rounded-2xl bg-br-blue text-white text-center mt-4 w-full">Fale Conosco</button>
+        </nav>
+    </div>
+
+    <main id="main-content" class="flex-grow pt-32 pb-0 px-0">
+        
+        <div id="page-home" class="page-section">
+            <div class="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center mb-10 min-h-[600px]">
+                <div class="space-y-6 z-10">
+                    <div class="inline-flex items-center gap-2"><span id="txt-status" class="text-sm font-bold text-white tracking-widest uppercase">DEPUTADO ESTADUAL</span></div>
+                    <h1 class="text-4xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                        <span id="txt-hero-title">De Barra do Bugres para o coração de Mato Grosso:</span> 
+                        <span class="text-br-yellow block mt-2" id="txt-hero-highlight">Chico Guarnieri, um deputado que faz acontecer.</span>
+                    </h1>
+                    <div id="txt-hero-desc" class="text-lg text-white/90 leading-relaxed max-w-xl prose prose-invert">
+                        <p>Chico Guarnieri é mais que um deputado, é a voz de quem acredita no trabalho.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <a id="btn-hero-cta" href="javascript:void(0)" onclick="navigateTo('contato')" class="px-8 py-4 rounded-md bg-white text-slate-900 font-bold shadow-lg hover:bg-gray-100 uppercase text-sm tracking-wide inline-flex items-center gap-3">
+                            <i class="fa-brands fa-whatsapp text-lg"></i> <span id="txt-btn-hero">Participe do nosso mandato!</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="relative h-full w-full hidden lg:block">
+                    <div class="absolute inset-y-0 right-0 w-[120%] h-full bg-gradient-to-l from-br-blue via-br-blue/50 to-transparent z-0 pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-full h-full rounded-[3rem] overflow-hidden border-0 border-white/10 flex items-center justify-end">
+                        <div id="img-hero" class="w-full h-full bg-cover bg-center opacity-80" style="background-image: url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-br-yellow w-full py-3 overflow-hidden border-y-4 border-yellow-500/20">
+                <div class="marquee-container">
+                    <div id="txt-ticker" class="marquee-content font-black text-br-blue uppercase tracking-widest text-sm flex gap-8">
+                        <span>• Chico Guarnieri</span><span>• Deputado Chico Guarnieri</span><span>• Chico Guarnieri</span><span>• Deputado Chico Guarnieri</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 py-20">
+                <div class="text-center mb-12"><h2 class="text-4xl font-bold text-br-yellow mb-2">Veja o nosso trabalho</h2></div>
+                <div id="feed-home" class="grid md:grid-cols-3 gap-8"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 py-10">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-br-yellow/10 rounded-[2.5rem] transform translate-x-4 translate-y-4"></div>
+                        <img id="img-bio" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="relative rounded-[2.5rem] shadow-2xl w-full h-auto border-4 border-white/10" alt="Bio">
+                    </div>
+                    <div class="text-white">
+                        <h2 id="txt-bio-title" class="text-3xl font-bold text-br-yellow mb-6">Conheça seu deputado</h2>
+                        <div id="txt-bio-desc" class="space-y-4 text-white/90 leading-relaxed text-sm lg:text-base text-justify prose prose-invert">
+                            <p>Nascido em Barra do Bugres, Chico Guarnieri construiu uma trajetória marcada pelo trabalho.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-br-yellow w-full py-8 mt-10">
+                <div class="max-w-7xl mx-auto px-4 flex flex-wrap justify-center md:justify-between gap-8 text-br-blue font-bold text-lg uppercase tracking-wider">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-cross text-2xl"></i> <span id="txt-val-1">Cristão</span></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-user-tie text-2xl"></i> <span id="txt-val-2">Empreendedor</span></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-users text-2xl"></i> <span id="txt-val-3">Pai e Avô</span></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-book-bible text-2xl"></i> <span id="txt-val-4">Conservador</span></div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-br-blue to-blue-900 w-full py-20 px-4 relative overflow-hidden">
+                <div id="img-footer-bg" class="absolute inset-0 opacity-20 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'); mix-blend-mode: overlay;"></div>
+                <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-center relative z-10">
+                    <div class="space-y-6">
+                        <div>
+                            <h3 id="txt-footer-pre" class="text-br-yellow font-bold uppercase tracking-widest text-sm mb-1">Fale com a gente</h3>
+                            <h2 id="txt-footer-title" class="text-3xl lg:text-4xl font-bold text-white">Participe do nosso mandato!</h2>
+                        </div>
+                        <div class="space-y-3 text-white">
+                            <div class="flex items-center gap-3"><i class="fa-brands fa-instagram text-br-yellow w-6"></i> <span>@chicoguarnierimt</span></div>
+                            <div class="flex items-center gap-3"><i class="fa-solid fa-location-dot text-br-yellow w-6 mt-1"></i> <span id="txt-footer-city">Cuiabá - MT</span></div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block relative h-80"><img id="img-footer-person" src="https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="absolute bottom-0 right-0 h-full w-auto object-contain drop-shadow-2xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-single-post" class="page-section hidden-page bg-white min-h-screen text-slate-800">
+            <div class="max-w-4xl mx-auto pt-10 px-4 pb-20">
+                <button onclick="window.history.back()" class="text-slate-500 hover:text-br-blue mb-6 flex items-center gap-2 font-bold"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                <div id="single-post-content"></div>
+            </div>
+        </div>
+
+        <div id="page-assembleia" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-assembleia" class="text-4xl font-bold text-white mb-6">Assembleia Legislativa</h1><div id="content-assembleia" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-projetos" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-projetos" class="text-4xl font-bold text-white mb-6">Projetos de Lei</h1><div id="content-projetos" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-indicacoes" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-indicacoes" class="text-4xl font-bold text-white mb-6">Indicações</h1><div id="content-indicacoes" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-requerimentos" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-requerimentos" class="text-4xl font-bold text-white mb-6">Requerimentos</h1><div id="content-requerimentos" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-oficios" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-oficios" class="text-4xl font-bold text-white mb-6">Ofícios</h1><div id="content-oficios" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-fiscalizacao" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-fiscalizacao" class="text-4xl font-bold text-white mb-6">Fiscalização</h1><div id="content-fiscalizacao" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-ja-e-lei" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-ja-e-lei" class="text-4xl font-bold text-white mb-6">Já é Lei</h1><div id="content-ja-e-lei" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-opiniao" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-opiniao" class="text-4xl font-bold text-white mb-6">Opinião</h1><div id="content-opiniao" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-geral" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-geral" class="text-4xl font-bold text-white mb-6">Geral</h1><div id="content-geral" class="grid md:grid-cols-3 gap-8"></div></div>
+        <div id="page-contato" class="page-section hidden-page max-w-7xl mx-auto px-4 pb-20 pt-10"><h1 id="title-contato" class="text-4xl font-bold text-white mb-6">Fale Conosco</h1><div id="content-contato" class="ios-card p-8 rounded-3xl"><form class="flex flex-col gap-4 max-w-xl mx-auto"><input type="text" placeholder="Nome" class="p-3 rounded-xl bg-slate-100 text-slate-800"><button class="bg-br-blue text-white py-3 rounded-xl font-bold">Enviar</button></form></div></div>
+
+        <div id="page-admin" class="page-section hidden-page max-w-7xl mx-auto pb-20 pt-10 px-4">
+            <div class="flex items-center justify-between mb-8"><h1 class="text-4xl font-bold text-white flex items-center gap-3"><i class="fa-solid fa-paintbrush text-br-yellow"></i> Painel Administrativo</h1><button onclick="logoutAdmin()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors">Sair <i class="fa-solid fa-right-from-bracket ml-2"></i></button></div>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="ios-card p-4 rounded-3xl h-fit max-h-[80vh] overflow-y-auto">
+                    <nav class="flex flex-col gap-2">
+                        <button onclick="switchAdminTab('news')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium bg-br-blue text-white shadow-md hover:bg-blue-800 transition-colors admin-tab-active" data-tab="news"><i class="fa-solid fa-pen-nib mr-2 w-5"></i> Redação</button>
+                        <button onclick="switchAdminTab('manage')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="manage"><i class="fa-solid fa-list-check mr-2 w-5"></i> Gerenciar Notícias</button>
+                        <div class="admin-restricted">
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mt-4 mb-1">Conteúdo & Design</div>
+                            <button onclick="switchAdminTab('team')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="team"><i class="fa-solid fa-users mr-2 w-5"></i> Equipe / Jornalistas</button>
+                            <button onclick="switchAdminTab('menu')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="menu"><i class="fa-solid fa-bars mr-2 w-5"></i> Menu & Botões</button>
+                            <button onclick="switchAdminTab('homecontent')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="homecontent"><i class="fa-solid fa-clapperboard mr-2 w-5"></i> Conteúdo Home</button>
+                            <button onclick="switchAdminTab('hero')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="hero"><i class="fa-solid fa-house mr-2 w-5"></i> Capa (Hero)</button>
+                            <button onclick="switchAdminTab('pages')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="pages"><i class="fa-solid fa-layer-group mr-2 w-5"></i> Páginas Internas</button>
+                            <button onclick="switchAdminTab('identity')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="identity"><i class="fa-solid fa-id-card mr-2 w-5"></i> Identidade Visual</button>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mt-4 mb-1">Sistema</div>
+                            <button onclick="switchAdminTab('integracao')" class="admin-tab-btn w-full text-left px-4 py-3 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors" data-tab="integracao"><i class="fa-brands fa-google mr-2 w-5"></i> Banco de Dados</button>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="lg:col-span-3 ios-card p-8 rounded-3xl">
+                    <div id="admin-news" class="admin-content">
+                        <div class="flex justify-between items-center mb-6 border-b pb-2">
+                            <h2 class="text-xl font-bold">Postar Notícia</h2>
+                            <div class="flex gap-2">
+                                <button onclick="openAIModal()" class="text-sm bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 py-1 rounded-lg hover:shadow-lg transition-all"><i class="fa-solid fa-wand-magic-sparkles"></i> Escrever com IA</button>
+                                <button onclick="resetNewsForm()" class="text-sm text-br-blue hover:underline">Limpar</button>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <input type="hidden" id="news-id-edit">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="design-control-group"><label class="design-label">Título</label><input type="text" id="news-title" class="design-input" placeholder="Manchete impactante"></div>
+                                <div class="design-control-group">
+                                    <label class="design-label">Capa</label>
+                                    <div class="flex gap-2 mb-2"><input type="text" id="news-image" class="design-input flex-grow" oninput="document.getElementById('news-img-preview').src = this.value || ''"><button onclick="triggerUpload('news-image', 'news-img-preview')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div>
+                                    <label class="design-label text-xs">Foco</label><select id="news-img-pos" class="design-input w-full" onchange="previewImgPos(this.value)"><option value="center">Centro</option><option value="top">Topo</option><option value="bottom">Baixo</option></select>
+                                    <img id="news-img-preview" class="h-32 w-full object-cover mt-2 rounded bg-slate-100">
+                                </div>
+                            </div>
+                            <div><label class="design-label mb-2">Corpo</label><div id="sections-container" class="space-y-4"></div><button onclick="addSection()" class="mt-2 text-br-blue font-bold hover:underline">+ Nova Seção</button></div>
+                            <div class="design-control-group"><label class="design-label mb-3">Categorias</label><div class="grid grid-cols-2 md:grid-cols-3 gap-3"><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="geral"> Geral</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="assembleia"> Assembleia</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="fiscalizacao"> Fiscalização</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="ja-e-lei"> Já é Lei</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="opiniao"> Opinião</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="projetos"> Projetos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="indicacoes"> Indicações</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="requerimentos"> Requerimentos</label><label class="flex items-center gap-2"><input type="checkbox" name="news-cat" value="oficios"> Ofícios</label></div></div>
+                            <div class="design-control-group"><label class="design-label">Autor</label><select id="news-journalist-select" class="design-input w-full"><option value="">Selecione...</option></select></div>
+                            <button id="btn-publish" onclick="publishNews()" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex justify-center items-center gap-2 text-lg"><i class="fa-solid fa-paper-plane"></i> Publicar</button>
+                        </div>
+                    </div>
+
+                    <div id="admin-manage" class="admin-content hidden">
+                        <h2 class="text-xl font-bold mb-6 border-b pb-2">Gerenciar Notícias</h2>
+                        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-100 uppercase text-xs font-bold text-slate-500"><tr><th class="p-3">Data</th><th class="p-3">Título</th><th class="p-3">Autor</th><th class="p-3 text-right">Ações</th></tr></thead><tbody id="manage-posts-list" class="divide-y divide-slate-100"></tbody></table></div>
+                    </div>
+
+                    <div id="admin-team" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Equipe / Jornalistas</h2><div class="grid md:grid-cols-2 gap-8"><div class="space-y-4"><h3 class="font-bold">Novo Jornalista</h3><input type="text" id="team-name" class="design-input" placeholder="Nome Completo"><input type="email" id="team-email" class="design-input" placeholder="Email"><div class="flex gap-2"><input type="text" id="team-photo" class="design-input flex-grow" placeholder="Foto URL" oninput="document.getElementById('team-preview').src = this.value || ''"><button onclick="triggerUpload('team-photo', 'team-preview')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div><label class="design-label text-xs">Foco da Foto</label><select id="team-img-pos" class="design-input w-full"><option value="center">Centro</option><option value="top">Topo</option></select><img id="team-preview" class="h-20 w-20 rounded-full object-cover bg-slate-100 mx-auto"><button onclick="saveJournalist()" class="w-full py-3 bg-br-blue text-white font-bold rounded-xl">Salvar Jornalista</button></div><div><h3 class="font-bold mb-3">Jornalistas Cadastrados</h3><div id="team-list" class="space-y-2"></div></div></div></div>
+                    <div id="admin-homecontent" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Conteúdo da Home</h2><div class="space-y-6"><div class="design-control-group"><label class="design-label">Ticker</label><input type="text" id="input-txt-ticker" class="design-input" oninput="updatePreview('txt-ticker', this.value)"></div><div class="design-control-group"><h3 class="font-bold text-lg mb-3">Bio / História</h3><label class="design-label">Título</label><input type="text" id="input-txt-bio-title" class="design-input mb-2" oninput="updatePreview('txt-bio-title', this.value)"><label class="design-label">Descrição</label><div class="rich-toolbar mb-1 flex gap-1"><button onclick="formatStatic('input-txt-bio-desc', 'bold')"><i class="fa-solid fa-bold"></i></button><button onclick="formatStatic('input-txt-bio-desc', 'italic')"><i class="fa-solid fa-italic"></i></button></div><div id="input-txt-bio-desc" class="editor-area design-input mb-2 h-32" contenteditable="true" oninput="updatePreviewHTML('txt-bio-desc', this.innerHTML)"></div><label class="design-label">Imagem</label><div class="flex gap-2"><input type="text" id="input-img-bio" class="design-input flex-grow" oninput="updateLogo('img-bio', this.value)"><button onclick="triggerUpload('input-img-bio', 'img-bio')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div></div><div class="design-control-group"><h3 class="font-bold text-lg mb-3">Valores</h3><div class="grid grid-cols-2 gap-4"><div><label class="design-label">Valor 1</label><input type="text" id="input-txt-val-1" class="design-input" oninput="updatePreview('txt-val-1', this.value)"></div><div><label class="design-label">Valor 2</label><input type="text" id="input-txt-val-2" class="design-input" oninput="updatePreview('txt-val-2', this.value)"></div><div><label class="design-label">Valor 3</label><input type="text" id="input-txt-val-3" class="design-input" oninput="updatePreview('txt-val-3', this.value)"></div><div><label class="design-label">Valor 4</label><input type="text" id="input-txt-val-4" class="design-input" oninput="updatePreview('txt-val-4', this.value)"></div></div></div><div class="design-control-group"><h3 class="font-bold text-lg mb-3">Rodapé Visual</h3><label class="design-label">Pré-Título</label><input type="text" id="input-txt-footer-pre" class="design-input mb-2" oninput="updatePreview('txt-footer-pre', this.value)"><label class="design-label">Título</label><input type="text" id="input-txt-footer-title" class="design-input mb-2" oninput="updatePreview('txt-footer-title', this.value)"><label class="design-label">Pessoa</label><div class="flex gap-2 mb-2"><input type="text" id="input-img-footer-person" class="design-input flex-grow" oninput="updateLogo('img-footer-person', this.value)"><button onclick="triggerUpload('input-img-footer-person', 'img-footer-person')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div><label class="design-label">Fundo</label><div class="flex gap-2"><input type="text" id="input-img-footer-bg" class="design-input flex-grow" oninput="updateImage('img-footer-bg', this.value)"><button onclick="triggerUpload('input-img-footer-bg', 'img-footer-bg')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div></div></div></div>
+                    <div id="admin-hero" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Editar Capa (Hero)</h2><div class="space-y-4"><div class="design-control-group"><label class="design-label">Tag Status</label><input type="text" id="input-txt-status" class="design-input" oninput="updatePreview('txt-status', this.value)"></div><div class="design-control-group"><label class="design-label">Título</label><input type="text" id="input-txt-hero-title" class="design-input" oninput="updatePreview('txt-hero-title', this.value)"></div><div class="design-control-group"><label class="design-label">Destaque</label><input type="text" id="input-txt-hero-highlight" class="design-input" oninput="updatePreview('txt-hero-highlight', this.value)"></div><div class="design-control-group"><label class="design-label">Descrição</label><div class="rich-toolbar mb-1 flex gap-1"><button onclick="formatStatic('input-txt-hero-desc', 'bold')"><i class="fa-solid fa-bold"></i></button><button onclick="formatStatic('input-txt-hero-desc', 'italic')"><i class="fa-solid fa-italic"></i></button></div><div id="input-txt-hero-desc" class="editor-area design-input" contenteditable="true" oninput="updatePreviewHTML('txt-hero-desc', this.innerHTML)"></div></div><div class="design-control-group"><label class="design-label">Fundo</label><div class="flex gap-2"><input type="text" id="input-img-hero" class="design-input flex-grow" oninput="updateImage('img-hero', this.value)"><button onclick="triggerUpload('input-img-hero', 'img-hero')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div></div></div></div>
+                    <div id="admin-menu" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Menu & Botões</h2><div class="space-y-6"><div class="design-control-group"><h3 class="font-bold text-lg mb-3">Botão Hero</h3><label class="design-label">Texto</label><input type="text" id="input-txt-btn-hero" class="design-input mb-2" oninput="updatePreview('txt-btn-hero', this.value)"><label class="design-label">Link</label><input type="text" id="input-btn-hero-cta-link" class="design-input" onchange="updateLink('btn-hero-cta', this.value)"></div><div class="design-control-group"><h3 class="font-bold text-lg mb-3">Navegação</h3><div class="grid gap-4"><div><label class="design-label">Fale Conosco (Texto)</label><input type="text" id="input-txt-btn-contact" class="design-input mb-1" oninput="updatePreview('txt-btn-contact', this.value)"><label class="design-label">Link</label><input type="text" id="input-btn-nav-contact-link" class="design-input" onchange="updateLink('btn-nav-contact', this.value)"></div><div><label class="design-label">Início (Texto)</label><input type="text" id="input-btn-nav-home" class="design-input" oninput="updatePreview('btn-nav-home', this.value)"></div><div><label class="design-label">Nosso Trabalho (Texto)</label><input type="text" id="input-txt-nav-work" class="design-input" oninput="updatePreview('txt-nav-work', this.value)"></div></div></div></div></div>
+                    <div id="admin-pages" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Páginas Internas</h2><div id="admin-pages-container" class="space-y-4"></div></div>
+                    <div id="admin-identity" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Identidade Visual</h2><div class="space-y-4"><div class="design-control-group"><label class="design-label">URL da Logo</label><div class="flex gap-2 mb-3"><input type="text" id="input-img-logo-main" class="design-input flex-grow" oninput="updateLogo('img-logo-main', this.value)"><button onclick="triggerUpload('input-img-logo-main', 'img-logo-main')" class="bg-br-blue text-white w-12 rounded-xl flex items-center justify-center"><i class="fa-solid fa-cloud-arrow-up"></i></button></div></div><div class="design-control-group"><label class="design-label">Cidade (Rodapé)</label><input type="text" id="input-txt-footer-city" class="design-input" oninput="updatePreview('txt-footer-city', this.value)"></div></div></div>
+                    <div id="admin-integracao" class="admin-content hidden"><h2 class="text-xl font-bold mb-6 border-b pb-2">Banco de Dados</h2><div class="text-center py-10"><button onclick="loadFromSheet()" class="mt-6 px-6 py-2 bg-br-blue text-white rounded-full font-bold">Forçar Recarregamento</button></div></div>
+                    <div class="mt-8 pt-6 border-t flex justify-end admin-restricted"><button onclick="saveToSheet()" class="px-8 py-3 bg-br-green text-white font-bold rounded-xl shadow-lg">Salvar Configurações</button></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-12 mt-auto text-slate-800 relative"><div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6"><div class="flex items-center gap-3"><img src="https://chicoguarnieri.com.br/wp-content/uploads/2025/01/logo-chico-png-1536x864.png" alt="Logo" class="h-10 w-auto object-contain"></div><div class="text-sm text-slate-500">© 2026 Gabinete Digital.</div><div class="flex gap-4 items-center"><button onclick="openLoginModal()" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400"><i class="fa-solid fa-lock"></i></button></div></div></footer>
+    <div id="login-modal" class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4"><div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm relative"><button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button><div class="text-center mb-6"><h2 class="text-2xl font-bold text-slate-800">Acesso Restrito</h2></div><form onsubmit="handleLogin(event)"><input type="password" id="admin-pass" placeholder="Senha" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-center text-lg text-slate-800"><button type="submit" class="w-full py-3 bg-br-blue text-white font-bold rounded-xl hover:bg-blue-900 transition-all shadow-lg">Entrar</button></form><p id="login-error" class="text-red-500 text-center text-sm mt-3 hidden font-bold">Senha incorreta!</p></div></div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxa9ioyNstJNYOZR2NfTd5BaRg8PHA57ZQoThl__MWV1bR3DckkSYNsLZyd67iCxs8u/exec';
+        
+        let siteData = { posts: [], journalists: [] };
+        let sectionCount = 0;
+        let currentUploadTargetInput = null;
+        let currentUploadPreviewId = null;
+
+        const trackedElements = ['txt-status','txt-hero-title','txt-hero-highlight','txt-ticker','txt-bio-title','txt-val-1','txt-val-2','txt-val-3','txt-val-4','txt-footer-pre','txt-footer-title','txt-footer-city','txt-btn-hero','txt-btn-contact','btn-nav-home','txt-nav-work','title-assembleia','title-projetos','title-indicacoes','title-requerimentos','title-oficios','title-fiscalizacao','title-ja-e-lei','title-opiniao','title-geral','title-contato'];
+        const trackedRichElements = ['txt-hero-desc', 'txt-bio-desc'];
+        const trackedImages = ['img-hero', 'img-footer-bg'];
+        const trackedSrcImages = ['img-logo-main', 'img-bio', 'img-footer-person'];
+        const trackedLinks = ['btn-hero-cta', 'btn-nav-contact']; 
+
+        window.addEventListener('load', () => {
+             if (GOOGLE_SCRIPT_URL.includes('http')) loadFromSheet();
+             else { document.getElementById('loading-overlay').style.display = 'none'; createSamplePosts(); renderAllPosts(); }
+             document.getElementById('global-file-input').addEventListener('change', handleFileSelect);
+             addSection(); generatePagesInputs();
+        });
+
+        // --- IA INTELIGENTE ---
+        function openAIModal() { document.getElementById('ai-modal').classList.remove('hidden'); }
+        function generateAI() {
+            const prompt = document.getElementById('ai-prompt').value;
+            if(!prompt) { alert("Digite algo!"); return; }
+            const btn = event.currentTarget; btn.innerText = "Escrevendo...";
+            setTimeout(() => {
+                const title = "Nova ação: " + prompt.split('.')[0].substring(0, 50) + "...";
+                const body = `<div class="mb-6 prose prose-lg text-slate-700"><p><strong>Cuiabá, MT</strong> — ${prompt}</p><p>A iniciativa visa fortalecer as bases e garantir que as demandas da população sejam atendidas com agilidade.</p></div>`;
+                document.getElementById('news-title').value = title;
+                const editor = document.querySelector('.section-text-input');
+                if(editor) editor.innerHTML = body;
+                document.getElementById('ai-modal').classList.add('hidden');
+                btn.innerText = "Gerar Matéria"; document.getElementById('ai-prompt').value = ""; alert("Texto gerado!");
+            }, 1500);
+        }
+
+        // --- COMPARTILHAMENTO ---
+        async function shareNative(id) {
+            const p = siteData.posts.find(x => x.id === id); if(!p) return;
+            const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
+            const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
+            const link = window.location.href;
+            const shareText = `*${p.title}*\n\n${summary}\n\nLeia mais acessando: ${link}`;
+            const shareData = { title: p.title, text: shareText };
+
+            if(navigator.share) {
+                try {
+                    // Busca a imagem com tratamento de CORS para garantir o envio no Face/Insta
+                    const response = await fetch(p.image, { mode: 'cors', credentials: 'omit' });
+                    if (!response.ok) throw new Error('Falha no CORS ou rede');
+                    const blob = await response.blob();
+                    const file = new File([blob], 'materia.jpg', { type: blob.type });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        shareData.files = [file];
+                    }
+                    await navigator.share(shareData);
+                } catch (e) {
+                    console.warn("Aviso: Imagem bloqueada por CORS. Compartilhando apenas texto.", e);
+                    // Fallback de segurança se houver bloqueio de imagem
+                    try { 
+                        await navigator.share({ title: p.title, text: shareText, url: link }); 
+                    } catch(err) { 
+                        console.log("Compartilhamento cancelado", err); 
+                    }
+                }
+            } else {
+                alert("Seu navegador não suporta a função de compartilhamento nativa. Tente o botão do WhatsApp.");
+            }
+        }
+
+        function getShareText(id) {
+            const p = siteData.posts.find(x => x.id === id); if(!p) return '';
+            const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
+            const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
+            return encodeURIComponent(`*${p.title}*\n\n${summary}\n\nLeia mais: ${window.location.href}`);
+        }
+
+        function shareWhatsApp(id) { window.open(`https://api.whatsapp.com/send?text=${getShareText(id)}`, '_blank'); }
+        
+        function shareFacebook(id) { 
+            // O Facebook bloqueia texto automático na versão Web. Usar a API nativa no celular resolve isso.
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
+                shareNative(id); 
+            } else {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank'); 
+            }
+        }
+        
+        function shareInstagram(id) {
+            // Instagram depende 100% do app nativo. 
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
+                shareNative(id); 
+            } else {
+                // No PC, copiamos o texto para o usuário não perder a legenda.
+                const p = siteData.posts.find(x => x.id === id);
+                if(p) {
+                    const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
+                    const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
+                    const text = `*${p.title}*\n\n${summary}\n\nLeia mais: ${window.location.href}`;
+                    
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        alert('Texto copiado para a área de transferência!\n\nNo computador, salve a imagem da matéria e cole este texto no seu Instagram.');
+                    } catch (err) {
+                        alert('No computador, salve a imagem de capa e copie o link para postar no seu Instagram!');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            }
+        }
+
+        // --- EDITAR POST (COMPLETO) ---
+        function editPost(id) {
+            const p = siteData.posts.find(post => post.id === id);
+            if(!p) return;
+            
+            document.getElementById('news-id-edit').value = p.id;
+            document.getElementById('news-title').value = p.title;
+            document.getElementById('news-image').value = p.image;
+            document.getElementById('news-img-preview').src = p.image;
+            document.getElementById('news-img-pos').value = p.imgPos || 'center';
+            
+            const sel = document.getElementById('news-journalist-select');
+            sel.value = ""; 
+            for(let i=0; i<sel.options.length; i++) {
+                try {
+                    const optVal = JSON.parse(sel.options[i].value);
+                    if(optVal.name === p.author.name) { sel.selectedIndex = i; break; }
+                } catch(e){}
+            }
+            
+            document.querySelectorAll('input[name="news-cat"]').forEach(cb => cb.checked = p.categories.includes(cb.value));
+            
+            document.getElementById('sections-container').innerHTML = '';
+            addSection();
+            const editor = document.querySelector('#section-1 .editor-area');
+            editor.innerHTML = p.content;
+            
+            document.getElementById('btn-publish').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
+            switchAdminTab('news');
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+
+        function deletePost(id) {
+            if(!confirm("Excluir notícia?")) return;
+            siteData.posts = siteData.posts.filter(p => p.id !== id);
+            const formData = new URLSearchParams(); formData.append('posts', JSON.stringify(siteData.posts));
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: formData }).then(r => r.json()).then(d => {
+                if(d.status === 'success') { renderAllPosts(); renderManageList(); alert('Excluído!'); }
+            });
+        }
+
+        function renderManageList() {
+            document.getElementById('manage-posts-list').innerHTML = siteData.posts.map(p => `
+                <tr class="hover:bg-slate-50 transition"><td class="p-3 text-slate-500">${p.date}</td><td class="p-3 font-bold text-slate-800">${p.title}</td><td class="p-3 text-br-blue">${p.author.name}</td><td class="p-3 text-right"><button onclick="editPost('${p.id}')" class="text-blue-500 hover:bg-blue-100 p-2 rounded mr-1"><i class="fa-solid fa-pen"></i></button><button onclick="deletePost('${p.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded"><i class="fa-solid fa-trash"></i></button></td></tr>
+            `).join('');
+        }
+
+        function generatePagesInputs() { const container = document.getElementById('admin-pages-container'); if(container) container.innerHTML = ['assembleia','projetos','indicacoes','requerimentos','oficios','fiscalizacao','ja-e-lei','opiniao','geral','contato'].map(p => `<div class="design-control-group"><label class="design-label capitalize">${p}</label><input type="text" id="input-title-${p}" class="design-input" oninput="updatePreview('title-${p}', this.value)"></div>`).join(''); }
+        function saveJournalist() {
+            const name = document.getElementById('team-name').value; const email = document.getElementById('team-email').value;
+            if(!name || !email) { alert('Preencha dados'); return; }
+            siteData.journalists = siteData.journalists || [];
+            siteData.journalists.push({ id: Date.now(), name, email, photo: document.getElementById('team-photo').value, imgPos: document.getElementById('team-img-pos').value });
+            renderJournalistsList(); populateJournalistSelect(); saveToSheet();
+            document.getElementById('team-name').value = ''; document.getElementById('team-email').value = '';
+        }
+        function renderJournalistsList() { document.getElementById('team-list').innerHTML = (siteData.journalists||[]).map(j => `<div class="flex items-center gap-3 bg-white p-2 rounded border"><img src="${j.photo||''}" class="w-10 h-10 rounded-full object-cover"><div class="flex-grow font-bold text-sm">${j.name}</div><button onclick="removeJournalist(${j.id})" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`).join(''); }
+        function removeJournalist(id) { siteData.journalists = siteData.journalists.filter(j => j.id !== id); renderJournalistsList(); populateJournalistSelect(); saveToSheet(); }
+        function populateJournalistSelect() { document.getElementById('news-journalist-select').innerHTML = '<option value="">Selecione...</option>' + (siteData.journalists||[]).map(j => `<option value='${JSON.stringify(j)}'>${j.name}</option>`).join(''); }
+
+        function addSection() {
+            sectionCount++; const div = document.createElement('div'); div.className = 'section-block'; div.id = `section-${sectionCount}`;
+            div.innerHTML = `<div class="remove-section-btn" onclick="removeSection('${div.id}')"><i class="fa-solid fa-trash"></i></div><div class="mb-2"><label class="text-xs font-bold text-slate-500">Imagem</label><div class="flex gap-2"><input type="text" id="sec-img-${sectionCount}" class="design-input flex-grow section-img-input" oninput="document.getElementById('sec-preview-${sectionCount}').src=this.value"><button onclick="triggerUpload('sec-img-${sectionCount}', 'sec-preview-${sectionCount}')" class="bg-br-blue text-white w-10 rounded"><i class="fa-solid fa-cloud-arrow-up"></i></button></div><img id="sec-preview-${sectionCount}" class="h-20 object-cover mt-2 rounded hidden" onload="this.style.display='block'"></div><div><label class="text-xs font-bold text-slate-500">Texto</label><div class="rich-toolbar mb-1 flex gap-1"><button onclick="formatSection('${div.id}','bold')"><i class="fa-solid fa-bold"></i></button><button onclick="formatSection('${div.id}','italic')"><i class="fa-solid fa-italic"></i></button></div><div class="editor-area section-text-input" contenteditable="true"></div></div>`;
+            document.getElementById('sections-container').appendChild(div);
+        }
+        function removeSection(id) { document.getElementById(id).remove(); }
+        function formatSection(id, cmd) { document.querySelector(`#${id} .editor-area`).focus(); document.execCommand(cmd, false, null); }
+        function formatStatic(id, cmd) { document.getElementById(id).focus(); document.execCommand(cmd, false, null); }
+        function previewImgPos(val) { document.getElementById('news-img-preview').className = `h-32 w-full object-cover mt-2 rounded bg-slate-100 object-${val}`; }
+
+        function triggerUpload(inp, prev) { currentUploadTargetInput=inp; currentUploadPreviewId=prev; document.getElementById('global-file-input').click(); }
+        function handleFileSelect(e) {
+            const f = e.target.files[0]; if(!f || f.size > 2e6) { alert('Máx 2MB'); return; }
+            document.getElementById('upload-overlay').style.display='flex';
+            const r = new FileReader(); r.onload = function(ex) {
+                const fd = new URLSearchParams(); fd.append('action','upload'); fd.append('fileName',f.name); fd.append('mimeType',f.type); fd.append('fileData',ex.target.result);
+                fetch(GOOGLE_SCRIPT_URL, {method:'POST', body:fd}).then(res=>res.json()).then(j=>{
+                    if(j.status==='success') { 
+                        if(currentUploadTargetInput) { const i = document.getElementById(currentUploadTargetInput); i.value=j.url; i.dispatchEvent(new Event('input')); }
+                        if(currentUploadPreviewId === 'img-logo-main') updateLogo('img-logo-main', j.url);
+                        else if(currentUploadPreviewId === 'img-hero') updateImage('img-hero', j.url);
+                        else if(currentUploadPreviewId) { const p = document.getElementById(currentUploadPreviewId); if(p) p.src = j.url; }
+                    } else alert('Erro upload');
+                }).finally(()=>{ document.getElementById('upload-overlay').style.display='none'; document.getElementById('global-file-input').value=''; });
+            }; r.readAsDataURL(f);
+        }
+
+        function publishNews() {
+            const idEdit = document.getElementById('news-id-edit').value;
+            const title = document.getElementById('news-title').value;
+            const image = document.getElementById('news-image').value;
+            const imgPos = document.getElementById('news-img-pos').value;
+            const authSel = document.getElementById('news-journalist-select').value;
+            if(!title || !authSel) { alert('Preencha tudo'); return; }
+            
+            let html = '';
+            document.querySelectorAll('.section-block').forEach(s => {
+                const img = s.querySelector('.section-img-input').value;
+                const txt = s.querySelector('.section-text-input').innerHTML;
+                if(img) html += `<div class="mb-4"><img src="${img}" class="w-full rounded shadow"></div>`;
+                if(txt) html += `<div class="mb-6 prose prose-lg">${txt}</div>`;
+            });
+            
+            const cats = []; document.querySelectorAll('input[name="news-cat"]:checked').forEach(c=>cats.push(c.value));
+            const newPost = { id: idEdit || 'post-'+Date.now(), title, image, imgPos, date: new Date().toLocaleDateString('pt-BR'), author: JSON.parse(authSel), categories: cats, content: html };
+            
+            if(idEdit) {
+                const idx = siteData.posts.findIndex(p => p.id === idEdit);
+                if(idx > -1) siteData.posts[idx] = newPost;
+            } else {
+                siteData.posts.unshift(newPost);
+            }
+            
+            renderAllPosts(); renderManageList();
+            
+            const btn = event.currentTarget; btn.innerHTML = 'Salvando...';
+            const fd = new URLSearchParams(); fd.append('posts', JSON.stringify(siteData.posts));
+            fetch(GOOGLE_SCRIPT_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                if(d.status==='success') { alert('Publicado!'); navigateTo('home'); resetNewsForm(); } else alert('Erro');
+            }).finally(()=>{ btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar'; });
+        }
+        function resetNewsForm() { document.getElementById('news-id-edit').value = ''; document.getElementById('news-title').value = ''; document.getElementById('news-image').value = ''; document.getElementById('sections-container').innerHTML = ''; addSection(); document.getElementById('btn-publish').innerHTML='<i class="fa-solid fa-paper-plane"></i> Publicar'; }
+
+        function renderAllPosts() { renderPostsContainer('feed-home', siteData.posts.slice(0,3)); ['assembleia','projetos','indicacoes','requerimentos','oficios','fiscalizacao','ja-e-lei','opiniao','geral'].forEach(c => renderPostsContainer(`content-${c}`, siteData.posts.filter(p=>p.categories.includes(c)))); }
+        function renderPostsContainer(id, posts) {
+            const c = document.getElementById(id); if(!c) return;
+            if(posts.length===0) { c.innerHTML = '<div class="col-span-3 text-center py-10 text-slate-400">Vazio</div>'; return; }
+            c.innerHTML = posts.map(p => {
+                const txt = document.createElement('div'); txt.innerHTML = p.content;
+                return `<div class="bg-transparent group cursor-pointer" onclick="openPost('${p.id}')"><div class="h-56 rounded-2xl overflow-hidden mb-4 relative shadow-lg"><img src="${p.image}" class="w-full h-full object-cover object-${p.imgPos||'center'} transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://via.placeholder.com/600x400?text=Imagem+Indisponivel'"><div class="absolute top-0 left-0 bg-br-blue/80 text-white text-[10px] px-2 py-1 font-bold uppercase rounded-br-lg">${p.categories[0]}</div></div><div class="px-2 text-center"><h3 class="text-lg font-bold ${id==='feed-home'?'text-br-yellow':'text-slate-800'} mb-2 group-hover:underline">${p.title}</h3><p class="${id==='feed-home'?'text-white/80':'text-slate-600'} text-sm line-clamp-4 mb-3">${txt.textContent||''}</p><span class="text-xs font-bold border-b pb-0.5 ${id === 'feed-home' ? 'text-br-yellow border-br-yellow' : 'text-br-blue border-br-blue'}">LEIA MAIS »</span></div></div>`;
+            }).join('');
+        }
+        function openPost(id) {
+            const p = siteData.posts.find(x => x.id === id); if(!p) return;
+            const auth = `<div class="mt-12 border-t pt-8"><h3 class="text-2xl font-bold text-slate-800 mb-6">Autor</h3><div class="border border-slate-200 p-6 rounded-2xl flex items-center gap-6 bg-slate-50"><div class="w-20 h-20 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden"><img src="${p.author.photo||''}" class="w-full h-full object-cover object-${p.author.imgPos||'center'}"></div><div><div class="text-xl font-bold text-br-blue mb-2">${p.author.name}</div><div class="flex gap-3"><button class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-bold">Ver posts</button><a href="mailto:${p.author.email}" class="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white"><i class="fa-solid fa-envelope"></i></a></div></div></div></div>`;
+            
+            const shareHTML = `
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-400 text-sm hidden md:inline">Compartilhar:</span>
+                <button onclick="shareWhatsApp('${p.id}')" class="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white hover:bg-green-600 transition shadow-md" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+                <button onclick="shareFacebook('${p.id}')" class="w-9 h-9 rounded-full bg-[#1877F2] flex items-center justify-center text-white hover:bg-blue-700 transition shadow-md" title="Facebook"><i class="fa-brands fa-facebook-f"></i></button>
+                <button onclick="shareInstagram('${p.id}')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white hover:opacity-90 transition shadow-md" title="Instagram"><i class="fa-brands fa-instagram"></i></button>
+                <button onclick="shareNative('${p.id}')" class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition shadow-md" title="Compartilhar como Imagem"><i class="fa-solid fa-share-nodes"></i></button>
+            </div>`;
+
+            document.getElementById('single-post-content').innerHTML = `<h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4">${p.title}</h1><div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-8"><div class="flex items-center gap-2 text-sm text-slate-500"><span class="font-bold text-br-blue">${p.author.name}</span> • <span>${p.date}</span></div>${shareHTML}</div><div class="w-full h-[400px] rounded-2xl overflow-hidden mb-10 shadow-xl"><img src="${p.image}" class="w-full h-full object-cover object-${p.imgPos||'center'}"></div><div class="prose prose-lg max-w-none text-slate-700 leading-relaxed mb-16">${p.content}</div>${auth}`;
+            navigateTo('single-post');
+        }
+
+        async function loadFromSheet() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            try {
+                const r = await fetch(GOOGLE_SCRIPT_URL); const d = await r.json();
+                if(d.config) { Object.keys(d.config).forEach(k => applyConfig(k, d.config[k])); if(d.config['site_journalists']) { siteData.journalists = d.config['site_journalists']; renderJournalistsList(); populateJournalistSelect(); } }
+                if(d.posts) { siteData.posts = d.posts; renderAllPosts(); renderManageList(); }
+                populateAdminInputs();
+            } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
+        }
+        function saveToSheet() {
+            const config = {}; trackedElements.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {text:el.innerText}; });
+            trackedRichElements.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {html:el.innerHTML}; });
+            trackedImages.forEach(id => { const el=document.getElementById(id); if(el) { const m=el.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/); config[id] = {image:m?m[1]:''}; }});
+            trackedSrcImages.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {src:el.src}; });
+            trackedLinks.forEach(id => { const el=document.getElementById(id); if(el) config[id] = {href:el.getAttribute('href')}; });
+            config['site_journalists'] = siteData.journalists;
+            const fd = new URLSearchParams(); fd.append('config', JSON.stringify(config));
+            const btn = event.currentTarget; btn.innerHTML = 'Salvando...';
+            fetch(GOOGLE_SCRIPT_URL, {method:'POST', body:fd}).then(()=>alert('Salvo!')).finally(()=>btn.innerHTML='Salvar Configurações');
+        }
+        function applyConfig(id, v) { const el = document.getElementById(id); if(!el) return; if(v.src) el.src=v.src; else if(v.image) el.style.backgroundImage=`url('${v.image}')`; else if(v.href) el.setAttribute('href',v.href); else if(v.html) el.innerHTML=v.html; else if(v.text) el.innerText=v.text; }
+        function populateAdminInputs() { trackedElements.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.value=el.innerText; }); trackedRichElements.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.innerHTML=el.innerHTML; }); trackedImages.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) { const m=el.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/); if(m) i.value=m[1]; } }); trackedSrcImages.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id); if(el&&i) i.value=el.src; }); trackedLinks.forEach(id => { const el=document.getElementById(id), i=document.getElementById('input-'+id+'-link'); if(el&&i) i.value=el.getAttribute('href'); }); }
+        function updatePreview(id, v) { document.getElementById(id).innerText = v; }
+        function updatePreviewHTML(id, v) { document.getElementById(id).innerHTML = v; }
+        function updateLink(id, v) { document.getElementById(id).setAttribute('href', v); }
+        function updateImage(id, v) { document.getElementById(id).style.backgroundImage = `url('${v}')`; }
+        function updateLogo(id, v) { document.getElementById(id).src = v; }
+        function createSamplePosts() { siteData.posts = []; }
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+        function handleLogin(e) { e.preventDefault(); const p=document.getElementById('admin-pass').value; if(p==='admin1234'||p==='red2026') { closeLoginModal(); navigateTo('admin'); if(p==='red2026') { document.querySelectorAll('.admin-restricted').forEach(e=>e.classList.add('hidden-tab')); document.getElementById('admin-manage').classList.remove('hidden'); switchAdminTab('news'); } else { document.querySelectorAll('.admin-restricted').forEach(e=>e.classList.remove('hidden-tab')); switchAdminTab('menu'); } } else document.getElementById('login-error').classList.remove('hidden'); }
+        function navigateTo(id) { document.querySelectorAll('.page-section').forEach(s=>s.classList.add('hidden-page')); document.getElementById('page-'+id).classList.remove('hidden-page'); window.scrollTo({top:0}); document.getElementById('mobile-menu').classList.add('translate-x-full'); }
+        function switchAdminTab(n) { document.querySelectorAll('.admin-content').forEach(c=>c.classList.add('hidden')); document.getElementById('admin-'+n).classList.remove('hidden'); }
+        function logoutAdmin() { navigateTo('home'); location.reload(); }
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('translate-x-full'); }
+    </script>
+</body>
+</html>
