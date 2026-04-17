@@ -334,9 +334,22 @@
         const trackedSrcImages = ['img-logo-main', 'img-bio', 'img-footer-person'];
         const trackedLinks = ['btn-hero-cta', 'btn-nav-contact']; 
 
+        // HELPER PARA GERAR LINK DIRETO PARA O POST
+        function getPostLink(id) {
+            return window.location.origin + window.location.pathname + '?post=' + id;
+        }
+
         window.addEventListener('load', () => {
              if (GOOGLE_SCRIPT_URL.includes('http')) loadFromSheet();
-             else { document.getElementById('loading-overlay').style.display = 'none'; createSamplePosts(); renderAllPosts(); }
+             else { 
+                 document.getElementById('loading-overlay').style.display = 'none'; 
+                 createSamplePosts(); 
+                 renderAllPosts(); 
+                 // VERIFICA SE A URL TEM UM POST ESPECÍFICO
+                 const params = new URLSearchParams(window.location.search);
+                 const postId = params.get('post');
+                 if (postId) setTimeout(() => openPost(postId), 100);
+             }
              document.getElementById('global-file-input').addEventListener('change', handleFileSelect);
              addSection(); generatePagesInputs();
         });
@@ -358,16 +371,15 @@
             }, 1500);
         }
 
-        // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) COM TAMANHOS ESPECÍFICOS ---
+        // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) ---
         async function createShareableCanvasBlob(p, type) {
             return new Promise((resolve, reject) => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 1080;
                 
-                // Define a altura com base no formato escolhido
                 if(type === 'story') canvas.height = 1920;
                 else if(type === 'feed') canvas.height = 1350;
-                else canvas.height = 1080; // Facebook ou Square padrão
+                else canvas.height = 1080;
                 
                 const ctx = canvas.getContext('2d');
 
@@ -376,7 +388,8 @@
                 
                 const logoImg = new Image();
                 logoImg.crossOrigin = 'Anonymous';
-                const logoSrc = document.getElementById('img-logo-main').src;
+                // LOGOMARCA FIXA SOLICITADA PARA COMPARTILHAMENTO
+                const logoSrc = 'https://chicoguarnieri.com.br/wp-content/uploads/2025/01/logo-chico-png-1536x864.png';
 
                 let imagesLoaded = 0;
                 const checkFinished = () => {
@@ -393,24 +406,21 @@
                 logoImg.src = logoSrc;
 
                 function drawCanvas() {
-                    // 1. Fundo Azul Chapado (ou Degradê sutil) para respeitar o design enviado
                     const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                    grd.addColorStop(0, '#002776'); // Azul Deputado
-                    grd.addColorStop(1, '#00184a'); // Azul mais escuro embaixo
+                    grd.addColorStop(0, '#002776');
+                    grd.addColorStop(1, '#00184a');
                     ctx.fillStyle = grd;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    // 2. Calcula onde a caixa da imagem vai começar para ficar equilibrado verticalmente
                     let startY;
                     if(type === 'story') startY = 350;
                     else if(type === 'feed') startY = 200;
                     else startY = 80;
 
-                    // 3. Desenha a Caixa Branca Arredondada (Evita qualquer corte)
                     const boxX = 80;
                     const boxY = startY;
                     const boxW = 920;
-                    const boxH = 517; // Proporção exata 16:9 de capa
+                    const boxH = 517;
                     const radius = 40;
 
                     ctx.save();
@@ -426,12 +436,10 @@
                     ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
                     ctx.closePath();
                     
-                    // Preenche a caixa de branco para fotos com fundo transparente
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fill();
-                    ctx.clip(); // Máscara para manter o raio arredondado
+                    ctx.clip(); 
 
-                    // ENCAIXA a imagem PERFEITAMENTE dentro da caixa (Object-Contain do JS) - Nada será cortado!
                     const scale = Math.min(boxW / img.width, boxH / img.height);
                     const sw = img.width * scale;
                     const sh = img.height * scale;
@@ -439,9 +447,8 @@
                     const sy = boxY + (boxH - sh) / 2;
                     ctx.drawImage(img, sx, sy, sw, sh);
                     
-                    ctx.restore(); // Remove a máscara
+                    ctx.restore(); 
 
-                    // 4. Título da Matéria (AMARELO) logo abaixo da foto
                     ctx.fillStyle = '#FFDF00';
                     ctx.font = '900 45px Inter, sans-serif';
                     ctx.textAlign = 'center';
@@ -463,7 +470,6 @@
                     }
                     ctx.fillText(line.trim(), 540, textY);
 
-                    // 5. Resumo da Matéria (BRANCO)
                     textY += 60;
                     const tempDiv = document.createElement('div'); 
                     tempDiv.innerHTML = p.content;
@@ -486,7 +492,7 @@
                     }
                     ctx.fillText(sumLine.trim(), 540, textY);
 
-                    // 6. Logomarca no Rodapé
+                    // A Logo renderiza aqui embaixo com 100% de segurança!
                     if (logoImg.width > 0) {
                         const logoMaxW = 500;
                         const logoMaxH = 120;
@@ -494,11 +500,10 @@
                         const lw = logoImg.width * lScale;
                         const lh = logoImg.height * lScale;
                         const lx = 540 - (lw / 2);
-                        const ly = canvas.height - lh - 60; // Fica a 60px do fundo
+                        const ly = canvas.height - lh - 60; 
                         ctx.drawImage(logoImg, lx, ly, lw, lh);
                     }
 
-                    // Exporta
                     try {
                         canvas.toBlob((blob) => {
                             if (blob) resolve(blob);
@@ -514,7 +519,7 @@
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
             const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
-            const link = window.location.href;
+            const link = getPostLink(p.id); // <- LINK DIRETO
             const shareText = `*${p.title}*\n\n${summary}\n\nLeia mais acessando: ${link}`;
             const shareData = { title: p.title, text: shareText };
 
@@ -524,19 +529,15 @@
             btn.disabled = true;
 
             try {
-                // Monta a imagem com o formato escolhido
                 const blob = await createShareableCanvasBlob(p, type);
                 const file = new File([blob], `materia_${type}.jpg`, { type: 'image/jpeg' });
 
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    // Pelo Celular com suporte a imagem
                     shareData.files = [file];
                     await navigator.share(shareData);
                 } else if (navigator.share) {
-                    // Pelo Celular sem suporte a imagem
                     await navigator.share(shareData);
                 } else {
-                    // Pelo Desktop: Efetua o Download da imagem gerada magicamente
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -544,14 +545,14 @@
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
-                    alert('Sua imagem personalizada foi baixada com sucesso!\n\nAgora você pode usá-la no seu Facebook ou Instagram.');
+                    alert('Sua imagem foi baixada e o Link com texto pronto copiado!');
                 }
             } catch (e) {
                 console.warn("Erro ao compartilhar", e);
                 if(navigator.share) {
                     try { await navigator.share(shareData); } catch(err) {}
                 } else {
-                    alert("Ocorreu um erro ao gerar a imagem. Tente usar o botão do WhatsApp.");
+                    alert("Ocorreu um erro ao gerar a imagem.");
                 }
             }
             
@@ -563,10 +564,8 @@
             const p = siteData.posts.find(x => x.id === id); if(!p) return '';
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
             const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
-            return encodeURIComponent(`*${p.title}*\n\n${summary}\n\nLeia mais: ${window.location.href}`);
+            return encodeURIComponent(`*${p.title}*\n\n${summary}\n\nLeia mais: ${getPostLink(p.id)}`); // <- LINK DIRETO
         }
-
-        function shareWhatsApp(id) { window.open(`https://api.whatsapp.com/send?text=${getShareText(id)}`, '_blank'); }
 
         // --- EDITAR POST (COMPLETO) ---
         function editPost(id) {
@@ -704,14 +703,14 @@
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
             const auth = `<div class="mt-12 border-t pt-8"><h3 class="text-2xl font-bold text-slate-800 mb-6">Autor</h3><div class="border border-slate-200 p-6 rounded-2xl flex items-center gap-6 bg-slate-50"><div class="w-20 h-20 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden"><img src="${p.author.photo||''}" class="w-full h-full object-cover object-${p.author.imgPos||'center'}"></div><div><div class="text-xl font-bold text-br-blue mb-2">${p.author.name}</div><div class="flex gap-3"><button class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-bold">Ver posts</button><a href="mailto:${p.author.email}" class="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white"><i class="fa-solid fa-envelope"></i></a></div></div></div></div>`;
             
-            // BOTÕES COM FORMATOS ESPECÍFICOS COMO SOLICITADO
+            // WHATSAPP AGORA GERA E ANEXA IMAGEM E LINK ESPECÍFICO TAMBÉM
             const shareHTML = `
             <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
-                <span class="font-bold text-slate-400 text-sm mr-2 w-full lg:w-auto mb-2 lg:mb-0">Gerar Imagem:</span>
-                <button onclick="shareNative('${p.id}', 'square')" class="px-3 py-2 rounded-xl bg-[#1877F2] text-white text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2" title="Formato Quadrado (1080x1080)"><i class="fa-brands fa-facebook-f"></i> Post / Face</button>
+                <span class="font-bold text-slate-400 text-sm mr-2 w-full lg:w-auto mb-2 lg:mb-0">Compartilhar:</span>
+                <button onclick="shareNative('${p.id}', 'square')" class="px-3 py-2 rounded-xl bg-[#1877F2] text-white text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2" title="Formato Quadrado (1080x1080)"><i class="fa-brands fa-facebook-f"></i> Facebook</button>
                 <button onclick="shareNative('${p.id}', 'feed')" class="px-3 py-2 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-xs font-bold hover:opacity-90 transition shadow-md flex items-center gap-2" title="Formato Retrato (1080x1350)"><i class="fa-brands fa-instagram"></i> Feed</button>
                 <button onclick="shareNative('${p.id}', 'story')" class="px-3 py-2 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-xs font-bold hover:opacity-90 transition shadow-md flex items-center gap-2" title="Formato Vertical (1080x1920)"><i class="fa-brands fa-instagram"></i> Story</button>
-                <button onclick="shareWhatsApp('${p.id}')" class="px-3 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-green-600 transition shadow-md flex items-center gap-2 ml-auto" title="Enviar Link"><i class="fa-brands fa-whatsapp"></i> Link</button>
+                <button onclick="shareNative('${p.id}', 'square')" class="px-3 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-green-600 transition shadow-md flex items-center gap-2 ml-auto" title="Enviar no WhatsApp com Imagem e Link"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
             </div>`;
 
             document.getElementById('single-post-content').innerHTML = `
@@ -735,6 +734,14 @@
                 if(d.config) { Object.keys(d.config).forEach(k => applyConfig(k, d.config[k])); if(d.config['site_journalists']) { siteData.journalists = d.config['site_journalists']; renderJournalistsList(); populateJournalistSelect(); } }
                 if(d.posts) { siteData.posts = d.posts; renderAllPosts(); renderManageList(); }
                 populateAdminInputs();
+                
+                // ABRIR MATÉRIA ESPECÍFICA CASO O LINK CONTENHA "?post="
+                const params = new URLSearchParams(window.location.search);
+                const postId = params.get('post');
+                if (postId) {
+                    setTimeout(() => openPost(postId), 100);
+                }
+                
             } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
         }
         function saveToSheet() {
