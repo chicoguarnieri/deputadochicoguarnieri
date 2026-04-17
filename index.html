@@ -358,90 +358,159 @@
             }, 1500);
         }
 
-        // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) ---
-        async function createShareableCanvasBlob(p) {
+        // --- GERADOR DE IMAGEM PARA COMPARTILHAMENTO (CANVAS) COM TAMANHOS ESPECÍFICOS ---
+        async function createShareableCanvasBlob(p, type) {
             return new Promise((resolve, reject) => {
                 const canvas = document.createElement('canvas');
                 canvas.width = 1080;
-                canvas.height = 1080;
+                
+                // Define a altura com base no formato escolhido
+                if(type === 'story') canvas.height = 1920;
+                else if(type === 'feed') canvas.height = 1350;
+                else canvas.height = 1080; // Facebook ou Square padrão
+                
                 const ctx = canvas.getContext('2d');
 
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
-                img.onload = () => {
-                    // 1. Fundo Base Azul
-                    ctx.fillStyle = '#002776';
-                    ctx.fillRect(0, 0, 1080, 1080);
+                
+                const logoImg = new Image();
+                logoImg.crossOrigin = 'Anonymous';
+                const logoSrc = document.getElementById('img-logo-main').src;
 
-                    // 2. Desenha a imagem (cobre do topo para baixo)
-                    const scale = Math.max(1080 / img.width, 1080 / img.height);
-                    const w = img.width * scale;
-                    const h = img.height * scale;
-                    ctx.drawImage(img, (1080 - w) / 2, 0, w, h);
+                let imagesLoaded = 0;
+                const checkFinished = () => {
+                    imagesLoaded++;
+                    if(imagesLoaded === 2) drawCanvas();
+                };
 
-                    // 3. Degradê Escuro (Fade) por cima da imagem
-                    const grd = ctx.createLinearGradient(0, 300, 0, 1080);
-                    grd.addColorStop(0, 'rgba(0, 39, 118, 0)');
-                    grd.addColorStop(0.5, 'rgba(0, 39, 118, 0.9)');
-                    grd.addColorStop(1, '#002776');
+                img.onload = checkFinished;
+                img.onerror = () => reject(new Error('Falha no CORS da imagem'));
+                img.src = p.image;
+
+                logoImg.onload = checkFinished;
+                logoImg.onerror = () => checkFinished(); // Continua mesmo se a logo der erro
+                logoImg.src = logoSrc;
+
+                function drawCanvas() {
+                    // 1. Fundo Azul Chapado (ou Degradê sutil) para respeitar o design enviado
+                    const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grd.addColorStop(0, '#002776'); // Azul Deputado
+                    grd.addColorStop(1, '#00184a'); // Azul mais escuro embaixo
                     ctx.fillStyle = grd;
-                    ctx.fillRect(0, 0, 1080, 1080);
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    // 4. Cabeçalho Personalizado
-                    ctx.fillStyle = '#FFDF00';
-                    ctx.font = 'bold 32px Inter, sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('DEPUTADO ESTADUAL CHICO GUARNIERI', 540, 70);
+                    // 2. Calcula onde a caixa da imagem vai começar para ficar equilibrado verticalmente
+                    let startY;
+                    if(type === 'story') startY = 350;
+                    else if(type === 'feed') startY = 200;
+                    else startY = 80;
 
-                    // 5. Escreve Título com Quebra de Linha Automática
+                    // 3. Desenha a Caixa Branca Arredondada (Evita qualquer corte)
+                    const boxX = 80;
+                    const boxY = startY;
+                    const boxW = 920;
+                    const boxH = 517; // Proporção exata 16:9 de capa
+                    const radius = 40;
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(boxX + radius, boxY);
+                    ctx.lineTo(boxX + boxW - radius, boxY);
+                    ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius);
+                    ctx.lineTo(boxX + boxW, boxY + boxH - radius);
+                    ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH);
+                    ctx.lineTo(boxX + radius, boxY + boxH);
+                    ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius);
+                    ctx.lineTo(boxX, boxY + radius);
+                    ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY);
+                    ctx.closePath();
+                    
+                    // Preenche a caixa de branco para fotos com fundo transparente
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.font = 'bold 65px Inter, sans-serif';
+                    ctx.fill();
+                    ctx.clip(); // Máscara para manter o raio arredondado
+
+                    // ENCAIXA a imagem PERFEITAMENTE dentro da caixa (Object-Contain do JS) - Nada será cortado!
+                    const scale = Math.min(boxW / img.width, boxH / img.height);
+                    const sw = img.width * scale;
+                    const sh = img.height * scale;
+                    const sx = boxX + (boxW - sw) / 2;
+                    const sy = boxY + (boxH - sh) / 2;
+                    ctx.drawImage(img, sx, sy, sw, sh);
+                    
+                    ctx.restore(); // Remove a máscara
+
+                    // 4. Título da Matéria (AMARELO) logo abaixo da foto
+                    ctx.fillStyle = '#FFDF00';
+                    ctx.font = '900 45px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    
                     const words = p.title.split(' ');
                     let line = '';
-                    let y = 600; 
-                    const lineHeight = 75;
+                    let textY = boxY + boxH + 80; 
+                    const lineHeight = 55;
+                    
                     for(let n = 0; n < words.length; n++) {
                         const testLine = line + words[n] + ' ';
-                        if (ctx.measureText(testLine).width > 960 && n > 0) {
-                            ctx.fillText(line.trim(), 540, y);
+                        if (ctx.measureText(testLine).width > 900 && n > 0) {
+                            ctx.fillText(line.trim(), 540, textY);
                             line = words[n] + ' ';
-                            y += lineHeight;
+                            textY += lineHeight;
                         } else {
                             line = testLine;
                         }
                     }
-                    ctx.fillText(line.trim(), 540, y);
+                    ctx.fillText(line.trim(), 540, textY);
 
-                    // 6. Resumo Curto
+                    // 5. Resumo da Matéria (BRANCO)
+                    textY += 60;
                     const tempDiv = document.createElement('div'); 
                     tempDiv.innerHTML = p.content;
-                    let summary = tempDiv.textContent.substring(0, 100).trim() + '...';
-                    ctx.fillStyle = '#E2E8F0';
-                    ctx.font = '35px Inter, sans-serif';
-                    ctx.fillText(summary, 540, y + 90);
-
-                    // 7. Rodapé "Call to Action"
-                    ctx.fillStyle = '#009C3B';
-                    ctx.fillRect(0, 1000, 1080, 80);
+                    let summary = tempDiv.textContent.substring(0, 160).trim() + '...';
+                    
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.font = 'bold 30px Inter, sans-serif';
-                    ctx.fillText('LEIA A MATÉRIA COMPLETA NO SITE', 540, 1050);
+                    ctx.font = '500 35px Inter, sans-serif';
+                    
+                    const sumWords = summary.split(' ');
+                    let sumLine = '';
+                    for(let n = 0; n < sumWords.length; n++) {
+                        const testLine = sumLine + sumWords[n] + ' ';
+                        if (ctx.measureText(testLine).width > 900 && n > 0) {
+                            ctx.fillText(sumLine.trim(), 540, textY);
+                            sumLine = sumWords[n] + ' ';
+                            textY += 45;
+                        } else {
+                            sumLine = testLine;
+                        }
+                    }
+                    ctx.fillText(sumLine.trim(), 540, textY);
 
-                    // Exporta como Imagem JPG
+                    // 6. Logomarca no Rodapé
+                    if (logoImg.width > 0) {
+                        const logoMaxW = 500;
+                        const logoMaxH = 120;
+                        const lScale = Math.min(logoMaxW / logoImg.width, logoMaxH / logoImg.height);
+                        const lw = logoImg.width * lScale;
+                        const lh = logoImg.height * lScale;
+                        const lx = 540 - (lw / 2);
+                        const ly = canvas.height - lh - 60; // Fica a 60px do fundo
+                        ctx.drawImage(logoImg, lx, ly, lw, lh);
+                    }
+
+                    // Exporta
                     try {
                         canvas.toBlob((blob) => {
                             if (blob) resolve(blob);
                             else reject(new Error('Canvas converteu falhou'));
                         }, 'image/jpeg', 0.95);
                     } catch (err) { reject(err); }
-                };
-                img.onerror = () => reject(new Error('Imagem original bloqueou a leitura de Pixel (CORS)'));
-                img.src = p.image;
+                }
             });
         }
 
-        // --- COMPARTILHAMENTO ---
-        async function shareNative(id) {
+        // --- COMPARTILHAMENTO INTELIGENTE ---
+        async function shareNative(id, type) {
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
             const summary = tempDiv.textContent.substring(0, 150).trim() + '...';
@@ -449,39 +518,45 @@
             const shareText = `*${p.title}*\n\n${summary}\n\nLeia mais acessando: ${link}`;
             const shareData = { title: p.title, text: shareText };
 
-            const btn = document.getElementById(`btn-share-native-${id}`);
-            if(btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Efeito de Carregando
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...';
+            btn.disabled = true;
 
-            if(navigator.share) {
-                try {
-                    // Tenta criar nossa imagem bonitona gerada com título
-                    const blob = await createShareableCanvasBlob(p);
-                    const file = new File([blob], 'materia_chico_guarnieri.jpg', { type: 'image/jpeg' });
-                    
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        shareData.files = [file];
-                    }
+            try {
+                // Monta a imagem com o formato escolhido
+                const blob = await createShareableCanvasBlob(p, type);
+                const file = new File([blob], `materia_${type}.jpg`, { type: 'image/jpeg' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    // Pelo Celular com suporte a imagem
+                    shareData.files = [file];
                     await navigator.share(shareData);
-                } catch (e) {
-                    console.warn("Aviso: Gerador de foto bloqueado por CORS. Compartilhando imagem crua ou só texto.", e);
-                    // Falhou em criar a imagem rica? Envia a imagem original limpa.
-                    try { 
-                        const response = await fetch(p.image, { mode: 'cors', credentials: 'omit' });
-                        if(response.ok) {
-                            const blob = await response.blob();
-                            const file = new File([blob], 'materia.jpg', { type: blob.type });
-                            if (navigator.canShare && navigator.canShare({ files: [file] })) shareData.files = [file];
-                        }
-                        await navigator.share(shareData); 
-                    } catch(err) { 
-                        // Falhou de vez? Envia só texto e o link do site.
-                        try { await navigator.share({ title: p.title, text: shareText, url: link }); } catch(errX) {}
-                    }
+                } else if (navigator.share) {
+                    // Pelo Celular sem suporte a imagem
+                    await navigator.share(shareData);
+                } else {
+                    // Pelo Desktop: Efetua o Download da imagem gerada magicamente
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `post_${type}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    alert('Sua imagem personalizada foi baixada com sucesso!\n\nAgora você pode usá-la no seu Facebook ou Instagram.');
                 }
-            } else {
-                alert("Seu navegador não suporta a função de compartilhamento nativa. Tente os outros botões.");
+            } catch (e) {
+                console.warn("Erro ao compartilhar", e);
+                if(navigator.share) {
+                    try { await navigator.share(shareData); } catch(err) {}
+                } else {
+                    alert("Ocorreu um erro ao gerar a imagem. Tente usar o botão do WhatsApp.");
+                }
             }
-            if(btn) btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>'; // Restaura botão
+            
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
         }
 
         function getShareText(id) {
@@ -492,31 +567,6 @@
         }
 
         function shareWhatsApp(id) { window.open(`https://api.whatsapp.com/send?text=${getShareText(id)}`, '_blank'); }
-        
-        function shareFacebook(id) { 
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
-                shareNative(id); // No celular, força a geração de imagem customizada!
-            } else {
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank'); 
-            }
-        }
-        
-        function shareInstagram(id) {
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && navigator.share) {
-                shareNative(id); // O Instagram no celular sempre vai pegar a imagem bonita criada no Canvas!
-            } else {
-                const p = siteData.posts.find(x => x.id === id);
-                if(p) {
-                    const tempDiv = document.createElement('div'); tempDiv.innerHTML = p.content;
-                    const text = `*${p.title}*\n\n${tempDiv.textContent.substring(0, 150).trim() + '...'}\n\nLeia mais: ${window.location.href}`;
-                    const textArea = document.createElement("textarea"); textArea.value = text;
-                    document.body.appendChild(textArea); textArea.select();
-                    try { document.execCommand('copy'); alert('Texto copiado!\n\nNo computador, salve a imagem da matéria e cole o texto copiado no seu Instagram.'); } 
-                    catch (err) { alert('No computador, copie o texto manualmente para postar no Instagram.'); }
-                    document.body.removeChild(textArea);
-                }
-            }
-        }
 
         // --- EDITAR POST (COMPLETO) ---
         function editPost(id) {
@@ -654,19 +704,19 @@
             const p = siteData.posts.find(x => x.id === id); if(!p) return;
             const auth = `<div class="mt-12 border-t pt-8"><h3 class="text-2xl font-bold text-slate-800 mb-6">Autor</h3><div class="border border-slate-200 p-6 rounded-2xl flex items-center gap-6 bg-slate-50"><div class="w-20 h-20 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center overflow-hidden"><img src="${p.author.photo||''}" class="w-full h-full object-cover object-${p.author.imgPos||'center'}"></div><div><div class="text-xl font-bold text-br-blue mb-2">${p.author.name}</div><div class="flex gap-3"><button class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-bold">Ver posts</button><a href="mailto:${p.author.email}" class="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white"><i class="fa-solid fa-envelope"></i></a></div></div></div></div>`;
             
+            // BOTÕES COM FORMATOS ESPECÍFICOS COMO SOLICITADO
             const shareHTML = `
-            <div class="flex items-center gap-3">
-                <span class="font-bold text-slate-400 text-sm hidden md:inline">Compartilhar:</span>
-                <button id="btn-share-wpp-${p.id}" onclick="shareWhatsApp('${p.id}')" class="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center text-white hover:bg-green-600 transition shadow-md" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
-                <button id="btn-share-fb-${p.id}" onclick="shareFacebook('${p.id}')" class="w-9 h-9 rounded-full bg-[#1877F2] flex items-center justify-center text-white hover:bg-blue-700 transition shadow-md" title="Facebook"><i class="fa-brands fa-facebook-f"></i></button>
-                <button id="btn-share-ig-${p.id}" onclick="shareInstagram('${p.id}')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white hover:opacity-90 transition shadow-md" title="Instagram"><i class="fa-brands fa-instagram"></i></button>
-                <button id="btn-share-native-${p.id}" onclick="shareNative('${p.id}')" class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white hover:bg-slate-800 transition shadow-md" title="Compartilhar como Imagem"><i class="fa-solid fa-share-nodes"></i></button>
+            <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
+                <span class="font-bold text-slate-400 text-sm mr-2 w-full lg:w-auto mb-2 lg:mb-0">Gerar Imagem:</span>
+                <button onclick="shareNative('${p.id}', 'square')" class="px-3 py-2 rounded-xl bg-[#1877F2] text-white text-xs font-bold hover:bg-blue-700 transition shadow-md flex items-center gap-2" title="Formato Quadrado (1080x1080)"><i class="fa-brands fa-facebook-f"></i> Post / Face</button>
+                <button onclick="shareNative('${p.id}', 'feed')" class="px-3 py-2 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-xs font-bold hover:opacity-90 transition shadow-md flex items-center gap-2" title="Formato Retrato (1080x1350)"><i class="fa-brands fa-instagram"></i> Feed</button>
+                <button onclick="shareNative('${p.id}', 'story')" class="px-3 py-2 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white text-xs font-bold hover:opacity-90 transition shadow-md flex items-center gap-2" title="Formato Vertical (1080x1920)"><i class="fa-brands fa-instagram"></i> Story</button>
+                <button onclick="shareWhatsApp('${p.id}')" class="px-3 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold hover:bg-green-600 transition shadow-md flex items-center gap-2 ml-auto" title="Enviar Link"><i class="fa-brands fa-whatsapp"></i> Link</button>
             </div>`;
 
-            // AQUI RESOLVEMOS A IMAGEM CORTADA (object-contain, max-h-[60vh] e bg-slate-100)
             document.getElementById('single-post-content').innerHTML = `
                 <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">${p.title}</h1>
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4 mb-8">
                     <div class="flex items-center gap-2 text-sm text-slate-500"><span class="font-bold text-br-blue">${p.author.name}</span> • <span>${p.date}</span></div>
                     ${shareHTML}
                 </div>
